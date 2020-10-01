@@ -1,0 +1,5 @@
+.DS_Store
+*.pk1
+__pycache__/
+test.py
+data/
