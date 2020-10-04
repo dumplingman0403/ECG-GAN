@@ -54,6 +54,7 @@ def Run(epochs):
     Rnn = RNN_model(x_train.shape[1:])
     history = Rnn.fit(x_train, y_train, epochs=epochs, verbose=1, batch_size=32, validation_data=(x_val, y_val))
     return history
+    
 if __name__ == "__main__":
 
     history = Run(50)
