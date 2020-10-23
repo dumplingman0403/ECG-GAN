@@ -16,11 +16,13 @@ import numpy as np
 from numpy.random import randn
 import tensorflow_gan
 from tensorflow.keras import backend as K
+
 NUM_LATENT = 100
 NUM_BATCH = 32
 NUM_DATA = 8528
 NUM_CLASS = 4              #data info: Normal:5154, AF:771, OtherRhythm:2557, Noisy:46, Totol:8525 
 DATA_SHAPE = (NUM_DATA, 180, 1)
+
 class TSGAN(object):
     
     def __init__(self):
@@ -113,3 +115,11 @@ class TSGAN(object):
 
     def wasserstein_loss(self, y_true, y_pred):
         return K.mean(y_true * y_pred)
+``
+
+if __name__ == "__main__":
+    
+    GAN = TSGAN()
+    generator = GAN.set_discriminator()
+    discriminator = GAN.set_generator()
+    
