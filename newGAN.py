@@ -20,10 +20,10 @@ def define_discriminator(input_shape, n_class):
     lyr = layers.Conv1D(32, 3, activation=layers.LeakyReLU(alpha=0.2), padding='same')(lyr)
     lyr = layers.BatchNormalization()(lyr)
     lyr = layers.MaxPooling1D()(lyr)
-    lyr = layers.Flatten()(lyr)
-    # lyr = layers.GRU(30)(lyr)
-    # lyr = layers.Dropout(0.5)(lyr)
-    # lyr = layers.GaussianNoise(0.2)(lyr)
+    # lyr = layers.Flatten()(lyr)
+    lyr = layers.GRU(30)(lyr)
+    lyr = layers.Dropout(0.5)(lyr)
+    lyr = layers.GaussianNoise(0.2)(lyr)
 
     # class label output  
     out1 = layers.Dense(n_class, activation='softmax')(lyr)
@@ -32,7 +32,7 @@ def define_discriminator(input_shape, n_class):
 
     model = tf.keras.Model(input_ecg, [out1, out2])
     opt = tf.keras.optimizers.Adam(lr=0.0002, beta_1=0.5)
-    model.compile(loss=[tf.keras.losses.sparse_categorical_crossentropy, 'binary_crossentropy'], optimizer=opt)
+    model.compile(loss=['sparse_categorical_crossentropy', 'binary_crossentropy'], optimizer=opt)
     
     model.summary()
         
@@ -93,9 +93,16 @@ def define_gan(discriminator_model, generator_model):
     gan_output = discriminator_model(generator_model.output)
     model = tf.keras.Model(generator_model.input, gan_output)
     opt = tf.keras.optimizers.Adam(lr=0.0002, beta_1=0.5)
-    model.compile(loss=[tf.keras.losses.sparse_categorical_crossentropy,'binary_crossentropy'], optimizer=opt) 
+    model.compile(loss=['sparse_categorical_crossentropy','binary_crossentropy'], optimizer=opt) 
     model.summary()
     return model
+
+def summarize_performance(epoch, g_model, d_model, dataset, latent_dim, n_samples=100, n_class=4):
+    [X_real, label_real], y_real = generate_real_sample(dataset, n_samples)
+    [X_fake, label_fake], y_fake = generate_fake_sample(generator, latent_size, n_samples, n_class)
+    _, acc_lr, acc_yr = d_model.evaluate(X_real.astype('float32'), [label_real.astype('float32'), y_real])
+    _, acc_lf, acc_yf = d_model.evaluate(X_fake, [label_fake, y_fake])
+    print('>Accuracy label= real: %.0f%%, fake: %.0f%% y= real: %.0f%%, fake: %.0f%%' % (acc_lr*100, acc_lf*100, acc_yr*100, acc_yf*100))
 
 def train(discriminator_model, generator_model, gan_model, dataset, latent_size=100, n_epoch=30, n_batch=64, n_class=4):
     data_size = len(dataset[0])
@@ -105,26 +112,21 @@ def train(discriminator_model, generator_model, gan_model, dataset, latent_size=
     print("number of steps: %d" % n_epoch)
     half_batch = int(n_batch/2)
 
-    for i in range(n_step):
+    for i in range(n_epoch):
+        for j in range(bat_per_epo):
+            [X_real, label_real], y_real = generate_real_sample(dataset, half_batch)
+            [X_fake, label_fake], y_fake = generate_fake_sample(generator_model, latent_size, half_batch, n_class)
 
-        [X_real, label_real], y_real = generate_real_sample(dataset, half_batch)   #sample size = half batch???
+            d_r= discriminator_model.train_on_batch(X_real.astype('float32'), [label_real.astype('float32'), y_real]) 
+            d_f= discriminator_model.train_on_batch(X_fake, [label_fake, y_fake])
 
-        _, d_r1, d_r2 = discriminator_model.train_on_batch(X_real.astype('float32'), [label_real.astype('float32'), y_real])
+            [z_input, z_labels] = generate_latent(latent_size, n_batch, 4)
+            y_gan = np.ones((n_batch, 1))
+            g_loss = gan_model.train_on_batch([z_input, z_labels], [y_gan, z_labels])
+            print('>%d, %d/%d' % (i+1, j+1, bat_per_epo), d_r, d_f, g_loss)
+        if (i+1) % 5 == 0:
+            summarize_performance(i, generator_model, discriminator_model, dataset, latent_size)
 
-        [X_fake, label_fake], y_fake = generate_fake_sample(generator, latent_size, half_batch, n_class)
-
-        _, d_f1, d_f2 = discriminator_model.train_on_batch(X_fake, [label_fake, y_fake])
-        
-        [z_input, z_labels] = generate_latent(latent_size, n_batch, 4)
-
-        y_gan = np.ones((n_batch, 1))
-
-        _, g_1, g_2 = gan_model.train_on_batch([z_input, z_labels], [y_gan, z_labels])
-
-        print('>%d, dr[%.3f,%.3f], df[%.3f,%.3f], g[%.3f,%.3f]' % (i+1, d_r1,d_r2, d_f1,d_f2, g_1,g_2))
-
-        if (i+1) % (bat_per_epo * 1) == 0:
-            summarize_performance(i, generator_model, latent_size)
 def load_data():
     ecg = np.array(ut.read_pickle('data/MedianWave_train.pk1'))
     lb = ut.read_pickle('data/label_train.pk1')
@@ -137,32 +139,7 @@ def load_data():
 
 
 
-def summarize_performance(step, g_model, latent_dim, n_samples=100):
-    # prepare fake examples
-    [X, nmn_label], nmn_y = generate_fake_sample(g_model, latent_dim, n_samples) #TODO!:Numan (nmns were _ and _) - change labels in this row and debug!
-    nmn_label.reshape((1, len(nmn_label)))
-    # scale from [-1,1] to [0,1]
-    X = (X + 1) / 2.0
-    # plot images
-    for i in range(100):
-        # define subplot
-        pyplot.subplot(10, 10, 1 + i)
-        # turn off axis
-        pyplot.axis('off')
-        # plot raw pixel data
-        pyplot.imshow(X[i, :], cmap='gray_r')
-        # np.savetxt('test_raw_nc%d%d.csv' % (i,step), X[i,:], delimiter=',')
-        # np.savetxt('test_cat_nc%d%d.csv' % (i,step), nmn_label[i],delimiter=',')
-    # save plot to file
-    #np.savetxt('test_raw_nc%d.csv' % (step), X[:,:,0], delimiter=',')
-    #np.savetxt('test_cat_nc%d.csv' % (step), nmn_label[:],delimiter=',')
-    filename1 = 'generated_plot_%04d.png' % (step+1)
-    pyplot.savefig(filename1)
-    pyplot.close()
-    # save the generator model
-    filename2 = 'model_%04d.h5' % (step+1)
-    g_model.save(filename2)
-    print('>Saved: %s and %s' % (filename1, filename2))
+
 if __name__ == "__main__":
     
     latent_size = 100
