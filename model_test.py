@@ -20,7 +20,7 @@ from tensorflow.keras import backend as K
 NUM_LATENT = 100
 NUM_BATCH = 32
 NUM_DATA = 8528
-NUM_CLASS = 4              #data info: Normal:5154, AF:771, OtherRhythm:2557, Noisy:46, Totol:8525 
+NUM_CLASS = 4              #data info: Normal:5154, AF:771, OtherRhythm:2557, Noisy:46, Totol:8525 ~^~^
 DATA_SHAPE = (NUM_DATA, 180, 1)
 
 class TSGAN(object):
@@ -36,7 +36,7 @@ class TSGAN(object):
                                 #Use ReLU in all layers except output use tanh
         #label input
         
-        # in_l = tf.keras.Input(shape=(1,))
+        # in_l = tf.keras.Input(shape=(1,))~^~^^~^~^~^~^~^^~^^~^~^
 
         #latent input
         in_lat = tf.keras.Input(shape=(100, ))
