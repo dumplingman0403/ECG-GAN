@@ -75,6 +75,7 @@ def generate_latent(latent_size, n_sample, num_class):
 def generate_fake_sample(generator, latent_size, n_sample, n_class=4):
     latent_input, label = generate_latent(latent_size, n_sample, n_class)
     ecg = generator.predict([latent_input, label])
+    ecg.reshape((-1, 180, 1))
     y = np.zeros((n_sample, 1))    #fake data y=0 --->fake:0, real:1
     return [ecg, label], y
 
@@ -129,6 +130,7 @@ def train(discriminator_model, generator_model, gan_model, dataset, latent_size=
 
 def load_data():
     ecg = np.array(ut.read_pickle('data/MedianWave_train.pk1'))
+    ecg.reshape((-1, 180, 1))
     lb = ut.read_pickle('data/label_train.pk1')
     lb[lb=='N'] = 0
     lb[lb=='A'] = 1
