@@ -5,18 +5,28 @@ import pickle
 import numpy as np
 
 
-def RNN_model(input_shape):
+def cnn_model(input_size):
 
     model = tf.keras.Sequential()
-    model.add(layers.LSTM(20))  # 20-100 fine tuning
-    model.add(layers.Dense(1000))
+    model.add(layers.Conv1D(16, 3, activation='relu', input_shape=input_size))
+    model.add(layers.BatchNormalization())
+    model.add(layers.MaxPooling1D(2))
+
+    model.add(layers.Conv1D(32, 3, activation='relu'))
+    model.add(layers.BatchNormalization())
+    model.add(layers.MaxPooling1D(2))
+
+    model.add(layers.Conv1D(64, 3, activation='relu'))
+    model.add(layers.BatchNormalization())
+    model.add(layers.MaxPooling1D(2))
+
+    model.add(layers.Flatten())
+    model.add(layers.Dense(1000, activation='relu'))
     model.add(layers.Dense(4, activation='softmax'))
 
-    opt = tf.keras.optimizers.Adam(lr=0.001)
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=opt, metrics=['accuracy', 'mse'])
-    return model
+    model.compile(loss= 'categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
+    return model
 
 def PrepareInput(train_path, val_path, train_label, val_label):
 
@@ -44,7 +54,7 @@ def PrepareInput(train_path, val_path, train_label, val_label):
     y_val = tf.keras.utils.to_categorical(y_val, 4)
 
     return [x_train, x_val, y_train, y_val]
-
+    model = cnn_model()
 
 def Run(epochs):
     PATH_TRAIN = 'data/mw_train.pkl'
@@ -53,12 +63,10 @@ def Run(epochs):
     VAL_LABEL = 'data/label_sample.pk1'
     x_train, x_val, y_train, y_val = PrepareInput(
         PATH_TRAIN, PATH_VAL, TRAIN_LABEL, VAL_LABEL)
-    Rnn = RNN_model(x_train.shape[1:])
-    history = Rnn.fit(x_train, y_train, epochs=epochs, verbose=1,
+    Cnn = cnn_model(x_train.shape[1:])
+    history = Cnn.fit(x_train, y_train, epochs=epochs, verbose=1,
                       batch_size=32, validation_data=(x_val, y_val))
     return history
-
-
+    
 if __name__ == "__main__":
-
     history = Run(50)
