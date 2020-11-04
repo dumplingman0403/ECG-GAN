@@ -69,4 +69,6 @@ def Run(epochs):
     return history
     
 if __name__ == "__main__":
-    history = Run(50)
+    # history = Run(50)
+    cnn = cnn_model((180, 1))
+    cnn.summary()
