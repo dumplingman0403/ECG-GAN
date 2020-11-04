@@ -29,20 +29,19 @@ def define_discriminator(input_shape, n_class):
     lyr = layers.GRU(30)(lyr)
     lyr = layers.Dropout(0.5)(lyr)
     lyr = layers.GaussianNoise(0.2)(lyr)
-
-    # class label output  
-    c_out = layers.Dense(n_class, activation='softmax')(lyr)
+    lyr = layers.Dense(n_class)(lyr)
+    # supervised output
+    c_out = layers.Activation('softmax')(lyr)  
     c_model = tf.keras.Model(input_ecg, c_out)
-    # real/fake output
-    d_out = layers.Dense(1, activation='sigmoid')(lyr)
+    # unspervised output
+    d_out = layers.Lambda(custom_activation)(lyr)
     d_model = tf.keras.Model(input_ecg, d_out)
-    # d_model = tf.keras.Model(input_ecg, [out1, out2])
+    # compile both model
     opt = tf.keras.optimizers.Adam(lr=0.0002, beta_1=0.5)
-    d_model.compile(loss=['sparse_categorical_crossentropy', 'binary_crossentropy'], optimizer=opt)
-    
-    d_model.summary()
+    c_model.compile(loss='sparse_categorical_crossentropy', optimizer=opt)
+    d_model.compile(loss='binary_crossentropy', optimizer=opt)
         
-    return d_model
+    return c_model, d_model
     
 
 def define_generator(input_shape, n_class=4):
@@ -108,28 +107,28 @@ def define_gan(d_model, g_model):
 #     _, acc_lf, acc_yf = d_model.evaluate(X_fake, [label_fake, y_fake])
 #     print('>Accuracy label= real: %.0f%%, fake: %.0f%% y= real: %.0f%%, fake: %.0f%%' % (acc_lr*100, acc_lf*100, acc_yr*100, acc_yf*100))
 
-def train(d_model, g_model, gan_model, dataset, latent_size=100, n_epoch=30, n_batch=64, n_class=4):
-    data_size = len(dataset[0])
-    bat_per_epo = (data_size//n_batch)
-    print("batch per epoch: %d" % bat_per_epo)
-    n_step = bat_per_epo * n_epoch
-    print("number of steps: %d" % n_epoch)
-    half_batch = n_batch//2
+# def train(d_model, g_model, gan_model, dataset, latent_size=100, n_epoch=30, n_batch=64, n_class=4):
+#     data_size = len(dataset[0])
+#     bat_per_epo = (data_size//n_batch)
+#     print("batch per epoch: %d" % bat_per_epo)
+#     n_step = bat_per_epo * n_epoch
+#     print("number of steps: %d" % n_epoch)
+#     half_batch = n_batch//2
 
-    for i in range(n_epoch):
+#     for i in range(n_epoch):
         
-        [X_real, label_real], y_real = generate_real_sample(dataset, half_batch)
-        [X_fake, label_fake], y_fake = generate_fake_sample(g_model, latent_size, half_batch, n_class)
+#         [X_real, label_real], y_real = generate_real_sample(dataset, half_batch)
+#         [X_fake, label_fake], y_fake = generate_fake_sample(g_model, latent_size, half_batch, n_class)
 
-        d_r= d_model.train_on_batch(X_real.astype('float32'), [label_real.astype('float32'), y_real]) 
-        d_f= d_model.train_on_batch(X_fake, [label_fake, y_fake])
+#         d_r= d_model.train_on_batch(X_real.astype('float32'), [label_real.astype('float32'), y_real]) 
+#         d_f= d_model.train_on_batch(X_fake, [label_fake, y_fake])
 
-        [z_input, z_labels] = generate_latent(latent_size, n_batch, 4)
-        y_gan = np.ones((n_batch, 1))
-        g_loss = gan_model.train_on_batch([z_input, z_labels], [y_gan, z_labels])
-        print('>%d, %d/%d' % (i+1, j+1, bat_per_epo), d_r, d_f, g_loss)
-        if (i+1) % 5 == 0:
-            summarize_performance(i, g_model, d_model, dataset, latent_size)
+#         [z_input, z_labels] = generate_latent(latent_size, n_batch, 4)
+#         y_gan = np.ones((n_batch, 1))
+#         g_loss = gan_model.train_on_batch([z_input, z_labels], [y_gan, z_labels])
+#         print('>%d, %d/%d' % (i+1, j+1, bat_per_epo), d_r, d_f, g_loss)
+#         if (i+1) % 5 == 0:
+#             summarize_performance(i, g_model, d_model, dataset, latent_size)
 
 def load_data():
     ecg = np.array(ut.read_pickle('data/MedianWave_train.pk1'))
@@ -147,10 +146,14 @@ def load_data():
 
 if __name__ == "__main__":
     
-    latent_size = 100
-    discriminator = define_discriminator((180, 1), 4)
-    generator = define_generator((latent_size, ), 4)
-    gan_model = define_gan(discriminator, generator)
-    dataset = load_data()
-    # print(len(dataset[0]))
-    train(discriminator, generator, gan_model, dataset, latent_size)
+    # latent_size = 100
+    # discriminator = define_discriminator((180, 1), 4)
+    # generator = define_generator((latent_size, ), 4)
+    # gan_model = define_gan(discriminator, generator)
+    # dataset = load_data()
+    # # print(len(dataset[0]))
+    # train(discriminator, generator, gan_model, dataset, latent_size)
+
+    c_model, d_model = define_discriminator((180, 1), 4)
+    c_model.summary()
+    d_model.summary()
