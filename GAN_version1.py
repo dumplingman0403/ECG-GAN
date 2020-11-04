@@ -11,7 +11,7 @@ def custom_activation(in_val):
     result = logexpsum/(logexpsum + 1.0)
     return result
 
-def define_discriminator(input_shape, n_class):
+def define_discriminator(input_shape, n_class=4):
 
     input_ecg = tf.keras.Input(input_shape)
     lyr = layers.Conv1D(8, 3, activation=layers.LeakyReLU(alpha=0.2), padding='same')(input_ecg)
@@ -45,51 +45,75 @@ def define_discriminator(input_shape, n_class):
     
 
 def define_generator(input_shape, n_class=4):
-    input_label = tf.keras.Input((1,))
-    lyr_lb = layers.Embedding(n_class, 50)(input_label)
-    n_nodes = 45*1
-    lyr_lb = layers.Dense(n_nodes)(lyr_lb)
-    lyr_lb = layers.Reshape((45, 1))(lyr_lb)
-    input_latent = tf.keras.Input(input_shape)
-    nodes = 45*12
-    lyr = layers.Dense(nodes)(input_latent)
-    lyr = layers.Reshape((45, 12))(lyr)
-    lyr = layers.Bidirectional(layers.LSTM(32, return_sequences=True))(lyr)
-    merge = layers.Concatenate()([lyr, lyr_lb])
-    lyr = layers.Conv1D(32, 3, activation='relu', padding='same')(merge)
-    lyr = layers.UpSampling1D(size=2)(lyr)
-    lyr = layers.Conv1D(16, 3, activation='relu', padding='same')(lyr)
-    lyr = layers.UpSampling1D(size=2)(lyr)
-    out_lyr = layers.Conv1D(1, 3, activation='tanh', padding='same')(lyr)
+    # input_label = tf.keras.Input((1,))
+    # lyr_lb = layers.Embedding(n_class, 50)(input_label)
+    # n_nodes = 45*1
+    # lyr_lb = layers.Dense(n_nodes)(lyr_lb)
+    # lyr_lb = layers.Reshape((45, 1))(lyr_lb)
+    # input_latent = tf.keras.Input(input_shape)
+    # nodes = 45*12
+    # lyr = layers.Dense(nodes)(input_latent)
+    # lyr = layers.Reshape((45, 12))(lyr)
+    # lyr = layers.Bidirectional(layers.LSTM(32, return_sequences=True))(lyr)
+    # merge = layers.Concatenate()([lyr, lyr_lb])
+    # lyr = layers.Conv1D(32, 3, activation='relu', padding='same')(merge)
+    # lyr = layers.UpSampling1D(size=2)(lyr)
+    # lyr = layers.Conv1D(16, 3, activation='relu', padding='same')(lyr)
+    # lyr = layers.UpSampling1D(size=2)(lyr)
+    # out_lyr = layers.Conv1D(1, 3, activation='tanh', padding='same')(lyr)
+    in_latent = tf.keras.Input(shape=input_shape)
+    n_nodes = 15*128
+    gen = layers.Dense(n_nodes)(in_latent)
+    gen = layers.LeakyReLU(alpha=0.2)(gen)
+    gen = layers.Reshape((15, 128))(gen)
 
-    g_model = tf.keras.Model([input_latent, input_label], out_lyr)
+    gen = layers.Conv1D(128, 16, padding='same')(gen)
+    gen = layers.LeakyReLU(alpha=0.2)(gen)
+    gen = layers.UpSampling1D(2)(gen)
+    gen = layers.BatchNormalization()(gen)
+
+    gen = layers.Conv1D(64, 16, padding='same')(gen)
+    gen = layers.LeakyReLU(alpha=0.2)(gen)
+    gen = layers.UpSampling1D(3)(gen)
+    gen = layers.BatchNormalization()(gen)
+
+    gen = layers.Conv1D(32, 16, padding='same')(gen)
+    gen = layers.LeakyReLU(alpha=0.2)(gen)
+    gen = layers.UpSampling1D(2)(gen)
+    gen = layers.BatchNormalization()(gen)
+
+    gen = layers.Conv1D(1, 16, activation='tanh',padding='same')(gen)
+    g_out = layers.Permute((2,1))(gen)
+
+    g_model = tf.keras.Model(in_latent, g_out)
     # model.summary()
     return g_model
 
 def generate_latent(latent_size, n_sample, n_class):
     # generete latent point following normal distribution
-    latent_input = np.random.randn(latent_size * n_sample)
+    z_input = np.random.randn(latent_size * n_sample)
     # reshape data_size x latent_size
-    latent_input = np.reshape(latent_input, (n_sample, latent_size))
-    label = np.random.randint(0, n_class, n_sample)
-    return [latent_input, label]
-    
-def generate_fake_sample(generator, latent_size, n_sample, n_class=4):
-    latent_input, label = generate_latent(latent_size, n_sample, n_class)
-    ecg = generator.predict([latent_input, label])
-    ecg.reshape((-1, 180, 1))
-    y = np.zeros((n_sample, 1))    #fake data y=0 --->fake:0, real:1
-    return [ecg, label], y
+    z_input = np.reshape(z_input, (n_sample, latent_size))
 
-def generate_real_sample(dataset, n_sample):
-    ecg, label = dataset
-    #sample dataset
-    idx= np.random.randint(0, len(dataset[0]), size=n_sample)
-    sample_ecg, sample_label = ecg[idx], label[idx]
-    sample_ecg = np.reshape(sample_ecg,(-1, 180, 1))
-    sample_label = np.array(sample_label)
-    y = np.ones((n_sample, 1))  #real data y=1 --->fake:0, real:1
-    return [sample_ecg, sample_label], y
+    return z_input
+    
+def generate_fake_sample(generator, latent_size, n_sample):
+    z_input, label = generate_latent(latent_size, n_sample)
+    signals = generator.predict(z_input)
+    y = np.zeros((n_sample, 1))    #fake data y=0 --->fake:0, real:1
+    return signals, y
+
+def generate_real_sample(dataset, n_sample, n_class):
+    X, y = dataset
+    X_list, y_list = list(), list()
+    n_per_class = n_sample // n_class
+
+    for i in range(n_class):
+        X_with_class = X[y == 1]
+        idx = np.random.randint(0, len(X_with_class), n_per_class)
+        [X_list.append(X_with_class[j]) for j in idx]
+        [y_list.append(i) for i in idx]
+    return np.asarray(X_list), np.asarray(y_list)
 
 def define_gan(d_model, g_model):
     d_model.trainable = False
@@ -154,6 +178,5 @@ if __name__ == "__main__":
     # # print(len(dataset[0]))
     # train(discriminator, generator, gan_model, dataset, latent_size)
 
-    c_model, d_model = define_discriminator((180, 1), 4)
-    c_model.summary()
-    d_model.summary()
+    g_model = define_generator((100,))
+    g_model.summary()
