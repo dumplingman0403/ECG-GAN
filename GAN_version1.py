@@ -6,6 +6,11 @@ import utils as ut
 from tqdm import tqdm
 from matplotlib import pyplot
 
+def custom_activation(in_val):
+    logexpsum = K.sum(K.exp(in_val), axis=-1, keepdims=True)
+    result = logexpsum/(logexpsum + 1.0)
+    return result
+
 def define_discriminator(input_shape, n_class):
 
     input_ecg = tf.keras.Input(input_shape)
@@ -26,11 +31,12 @@ def define_discriminator(input_shape, n_class):
     lyr = layers.GaussianNoise(0.2)(lyr)
 
     # class label output  
-    out1 = layers.Dense(n_class, activation='softmax')(lyr)
+    c_out = layers.Dense(n_class, activation='softmax')(lyr)
+    c_model = tf.keras.Model(input_ecg, c_out)
     # real/fake output
-    out2 = layers.Dense(1, activation='sigmoid')(lyr)
-
-    d_model = tf.keras.Model(input_ecg, [out1, out2])
+    d_out = layers.Dense(1, activation='sigmoid')(lyr)
+    d_model = tf.keras.Model(input_ecg, d_out)
+    # d_model = tf.keras.Model(input_ecg, [out1, out2])
     opt = tf.keras.optimizers.Adam(lr=0.0002, beta_1=0.5)
     d_model.compile(loss=['sparse_categorical_crossentropy', 'binary_crossentropy'], optimizer=opt)
     
