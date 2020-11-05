@@ -120,19 +120,20 @@ def generate_real_sample(dataset, n_sample):
 
 def summarize_performance(step, g_model, c_model, latent_size, dataset, n_sample=100):
 
-    X, _ = generate_fake_sample(g_model, latent_size, n_sample)
+    # X, _ = generate_fake_sample(g_model, latent_size, n_sample)
 
-    for i in range(100):
-        plt.subplot(10, 10, i+1)
-        plt.axis('off')
-        plt.imshow(X[i, :, :])
+    # for i in range(100):
+    #     plt.subplot(10, 10, i+1)
+    #     plt.axis('off')
+    #     plt.imshow(X[i, :, :])
     X, y = dataset
     _, acc = c_model.evaluate(X, y.astype(np.float16), verbose=0)
     print('Classifier Accuracy: %.3f%%' % (acc * 100))
     
 
 def train(g_model, d_model, c_model, gan_model, dataset, latent_size, n_epochs=20, n_batch=100):
-    X_sup, y_sup = select_supervised_sample(dataset)
+    # X_sup, y_sup = select_supervised_sample(dataset)
+    X_sup, y_sup = dataset
     print(X_sup.shape, y_sup.shape)
     bat_per_epo = len(dataset[0])//n_batch
     n_step = int(bat_per_epo * n_epochs)
@@ -141,7 +142,7 @@ def train(g_model, d_model, c_model, gan_model, dataset, latent_size, n_epochs=2
     for i in range(n_step):
         # update supervised discriminator (c)
         [X_sup_real, y_sup_real], _ = generate_real_sample([X_sup, y_sup], half_batch)
-        c_loss, c_acc = c_model.train_on_batch(X_sup_real, y_sup_real)
+        c_loss, c_acc = c_model.train_on_batch(X_sup_real, y_sup_real.astype(np.float16))
         # update unsupervised discriminator (d)
         [X_real, _], y_real = generate_real_sample(dataset, half_batch)
         d_loss1 = d_model.train_on_batch(X_real, y_real)
@@ -156,30 +157,6 @@ def train(g_model, d_model, c_model, gan_model, dataset, latent_size, n_epochs=2
         if (i + 1) % (bat_per_epo * 1) == 0:
             summarize_performance(i, g_model, c_model, latent_size, dataset)
             
-
-
-# def train(d_model, g_model, gan_model, dataset, latent_size=100, n_epoch=30, n_batch=64, n_class=4):
-#     data_size = len(dataset[0])
-#     bat_per_epo = (data_size//n_batch)
-#     print("batch per epoch: %d" % bat_per_epo)
-#     n_step = bat_per_epo * n_epoch
-#     print("number of steps: %d" % n_epoch)
-#     half_batch = n_batch//2
-
-#     for i in range(n_epoch):
-        
-#         [X_real, label_real], y_real = generate_real_sample(dataset, half_batch)
-#         [X_fake, label_fake], y_fake = generate_fake_sample(g_model, latent_size, half_batch, n_class)
-
-#         d_r= d_model.train_on_batch(X_real.astype('float32'), [label_real.astype('float32'), y_real]) 
-#         d_f= d_model.train_on_batch(X_fake, [label_fake, y_fake])
-
-#         [z_input, z_labels] = generate_latent(latent_size, n_batch, 4)
-#         y_gan = np.ones((n_batch, 1))
-#         g_loss = gan_model.train_on_batch([z_input, z_labels], [y_gan, z_labels])
-#         print('>%d, %d/%d' % (i+1, j+1, bat_per_epo), d_r, d_f, g_loss)
-#         if (i+1) % 5 == 0:
-#             summarize_performance(i, g_model, d_model, dataset, latent_size)
 
 def load_data():
     ecg = np.array(ut.read_pickle('data/mw_train.pkl'))
