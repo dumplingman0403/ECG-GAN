@@ -38,7 +38,7 @@ def define_discriminator(input_shape, n_class=4):
     d_model = tf.keras.Model(input_ecg, d_out)
     # compile both model
     opt = tf.keras.optimizers.Adam(lr=0.0002, beta_1=0.5)
-    c_model.compile(loss='sparse_categorical_crossentropy', optimizer=opt)
+    c_model.compile(loss='sparse_categorical_crossentropy', optimizer=opt, metrics=['accuracy'])
     d_model.compile(loss='binary_crossentropy', optimizer=opt)
         
     return c_model, d_model
@@ -127,7 +127,7 @@ def summarize_performance(step, g_model, c_model, latent_size, dataset, n_sample
         plt.axis('off')
         plt.imshow(X[i, :, :])
     X, y = dataset
-    _, acc = c_model.evaluate((X, y), verbose=0)
+    _, acc = c_model.evaluate(X, y.astype(np.float16), verbose=0)
     print('Classifier Accuracy: %.3f%%' % (acc * 100))
     
 
@@ -141,7 +141,7 @@ def train(g_model, d_model, c_model, gan_model, dataset, latent_size, n_epochs=2
     for i in range(n_step):
         # update supervised discriminator (c)
         [X_sup_real, y_sup_real], _ = generate_real_sample([X_sup, y_sup], half_batch)
-        c_loss = c_model.train_on_batch(X_sup_real, y_sup_real)
+        c_loss, c_acc = c_model.train_on_batch(X_sup_real, y_sup_real)
         # update unsupervised discriminator (d)
         [X_real, _], y_real = generate_real_sample(dataset, half_batch)
         d_loss1 = d_model.train_on_batch(X_real, y_real)
@@ -151,7 +151,7 @@ def train(g_model, d_model, c_model, gan_model, dataset, latent_size, n_epochs=2
         X_gan, y_gan = generate_latent(latent_size, n_batch), np.ones((n_batch, 1))
         g_loss = gan_model.train_on_batch(X_gan, y_gan)
         # summarize loss on this batch
-        print('>%d, c[%.3f], d[%.3f,%.3f], g[%.3f]'%(i+1, c_loss, d_loss1, d_loss2, g_loss))
+        print('>%d, c[%.3f,%.0f], d[%.3f,%.3f], g[%.3f]'%(i+1, c_loss, c_acc*100, d_loss1, d_loss2, g_loss))
         
         if (i + 1) % (bat_per_epo * 1) == 0:
             summarize_performance(i, g_model, c_model, latent_size, dataset)
@@ -201,6 +201,5 @@ if __name__ == "__main__":
     g_model = define_generator((latent_size, ), 4)
     gan_model = define_gan(d_model, g_model)
     dataset = load_data()
-    # # print(len(dataset[0]))
     train(g_model, d_model, c_model, gan_model, dataset, latent_size)
 
