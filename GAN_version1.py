@@ -4,7 +4,7 @@ import numpy as np
 from tensorflow.keras import backend as K
 import utils as ut
 from tqdm import tqdm
-from matplotlib import pyplot
+import matplotlib.pyplot as plt
 
 def custom_activation(in_val):
     logexpsum = K.sum(K.exp(in_val), axis=-1, keepdims=True)
@@ -45,22 +45,6 @@ def define_discriminator(input_shape, n_class=4):
     
 
 def define_generator(input_shape, n_class=4):
-    # input_label = tf.keras.Input((1,))
-    # lyr_lb = layers.Embedding(n_class, 50)(input_label)
-    # n_nodes = 45*1
-    # lyr_lb = layers.Dense(n_nodes)(lyr_lb)
-    # lyr_lb = layers.Reshape((45, 1))(lyr_lb)
-    # input_latent = tf.keras.Input(input_shape)
-    # nodes = 45*12
-    # lyr = layers.Dense(nodes)(input_latent)
-    # lyr = layers.Reshape((45, 12))(lyr)
-    # lyr = layers.Bidirectional(layers.LSTM(32, return_sequences=True))(lyr)
-    # merge = layers.Concatenate()([lyr, lyr_lb])
-    # lyr = layers.Conv1D(32, 3, activation='relu', padding='same')(merge)
-    # lyr = layers.UpSampling1D(size=2)(lyr)
-    # lyr = layers.Conv1D(16, 3, activation='relu', padding='same')(lyr)
-    # lyr = layers.UpSampling1D(size=2)(lyr)
-    # out_lyr = layers.Conv1D(1, 3, activation='tanh', padding='same')(lyr)
     in_latent = tf.keras.Input(shape=input_shape)
     n_nodes = 15*128
     gen = layers.Dense(n_nodes)(in_latent)
@@ -82,14 +66,23 @@ def define_generator(input_shape, n_class=4):
     gen = layers.UpSampling1D(2)(gen)
     gen = layers.BatchNormalization()(gen)
 
-    gen = layers.Conv1D(1, 16, activation='tanh',padding='same')(gen)
-    g_out = layers.Permute((2,1))(gen)
+    g_out = layers.Conv1D(1, 16, activation='tanh',padding='same')(gen)
+    # g_out = layers.Permute((2,1))(gen)
 
     g_model = tf.keras.Model(in_latent, g_out)
     # model.summary()
     return g_model
 
-def generate_latent(latent_size, n_sample, n_class):
+def define_gan(d_model, g_model):
+    d_model.trainable = False
+    gan_output = d_model(g_model.output)
+    model = tf.keras.Model(g_model.input, gan_output)
+    opt = tf.keras.optimizers.Adam(lr=0.0002, beta_1=0.5)
+    model.compile(loss=['binary_crossentropy'], optimizer=opt) 
+    # model.summary()
+    return model
+
+def generate_latent(latent_size, n_sample):
     # generete latent point following normal distribution
     z_input = np.random.randn(latent_size * n_sample)
     # reshape data_size x latent_size
@@ -98,12 +91,12 @@ def generate_latent(latent_size, n_sample, n_class):
     return z_input
     
 def generate_fake_sample(generator, latent_size, n_sample):
-    z_input, label = generate_latent(latent_size, n_sample)
+    z_input = generate_latent(latent_size, n_sample)
     signals = generator.predict(z_input)
     y = np.zeros((n_sample, 1))    #fake data y=0 --->fake:0, real:1
     return signals, y
 
-def generate_real_sample(dataset, n_sample, n_class):
+def select_supervised_sample(dataset, n_sample=100, n_class=4):
     X, y = dataset
     X_list, y_list = list(), list()
     n_per_class = n_sample // n_class
@@ -112,24 +105,58 @@ def generate_real_sample(dataset, n_sample, n_class):
         X_with_class = X[y == 1]
         idx = np.random.randint(0, len(X_with_class), n_per_class)
         [X_list.append(X_with_class[j]) for j in idx]
-        [y_list.append(i) for i in idx]
-    return np.asarray(X_list), np.asarray(y_list)
+        [y_list.append(i) for k in idx]
+    return np.asarray(X_list).reshape(-1, len(X_list[0]), 1), np.asarray(y_list)
 
-def define_gan(d_model, g_model):
-    d_model.trainable = False
-    gan_output = d_model(g_model.output)
-    model = tf.keras.Model(g_model.input, gan_output)
-    opt = tf.keras.optimizers.Adam(lr=0.0002, beta_1=0.5)
-    model.compile(loss=['binary_crossentropy'], optimizer=opt) 
-    model.summary()
-    return model
+def generate_real_sample(dataset, n_sample):
 
-# def summarize_performance(epoch, g_model, d_model, dataset, latent_dim, n_samples=100, n_class=4):
-#     [X_real, label_real], y_real = generate_real_sample(dataset, n_samples)
-#     [X_fake, label_fake], y_fake = generate_fake_sample(generator, latent_size, n_samples, n_class)
-#     _, acc_lr, acc_yr = d_model.evaluate(X_real.astype('float32'), [label_real.astype('float32'), y_real])
-#     _, acc_lf, acc_yf = d_model.evaluate(X_fake, [label_fake, y_fake])
-#     print('>Accuracy label= real: %.0f%%, fake: %.0f%% y= real: %.0f%%, fake: %.0f%%' % (acc_lr*100, acc_lf*100, acc_yr*100, acc_yf*100))
+    X, labels = dataset
+
+    idx = np.random.randint(0, len(X), n_sample)
+    X, labels = X[idx], labels[idx]
+    X.reshape(-1,X.shape[1], 1)
+    y = np.ones((n_sample, 1))
+    return [X, labels], y
+
+def summarize_performance(step, g_model, c_model, latent_size, dataset, n_sample=100):
+
+    X, _ = generate_fake_sample(g_model, latent_size, n_sample)
+
+    for i in range(100):
+        plt.subplot(10, 10, i+1)
+        plt.axis('off')
+        plt.imshow(X[i, :, :])
+    X, y = dataset
+    _, acc = c_model.evaluate((X, y), verbose=0)
+    print('Classifier Accuracy: %.3f%%' % (acc * 100))
+    
+
+def train(g_model, d_model, c_model, gan_model, dataset, latent_size, n_epochs=20, n_batch=100):
+    X_sup, y_sup = select_supervised_sample(dataset)
+    print(X_sup.shape, y_sup.shape)
+    bat_per_epo = len(dataset[0])//n_batch
+    n_step = int(bat_per_epo * n_epochs)
+    half_batch = int(n_batch//2)
+    print('n_epochs=%d, n_batch=%d, 1/2=%d, b/e=%d, steps=%d' % (n_epochs, n_batch, half_batch, bat_per_epo, n_step))
+    for i in range(n_step):
+        # update supervised discriminator (c)
+        [X_sup_real, y_sup_real], _ = generate_real_sample([X_sup, y_sup], half_batch)
+        c_loss = c_model.train_on_batch(X_sup_real, y_sup_real)
+        # update unsupervised discriminator (d)
+        [X_real, _], y_real = generate_real_sample(dataset, half_batch)
+        d_loss1 = d_model.train_on_batch(X_real, y_real)
+        X_fake, y_fake = generate_fake_sample(g_model, latent_size, half_batch)
+        d_loss2 = d_model.train_on_batch(X_fake, y_fake)
+        # update generator (g)
+        X_gan, y_gan = generate_latent(latent_size, n_batch), np.ones((n_batch, 1))
+        g_loss = gan_model.train_on_batch(X_gan, y_gan)
+        # summarize loss on this batch
+        print('>%d, c[%.3f], d[%.3f,%.3f], g[%.3f]'%(i+1, c_loss, d_loss1, d_loss2, g_loss))
+        
+        if (i + 1) % (bat_per_epo * 1) == 0:
+            summarize_performance(i, g_model, c_model, latent_size, dataset)
+            
+
 
 # def train(d_model, g_model, gan_model, dataset, latent_size=100, n_epoch=30, n_batch=64, n_class=4):
 #     data_size = len(dataset[0])
@@ -155,28 +182,25 @@ def define_gan(d_model, g_model):
 #             summarize_performance(i, g_model, d_model, dataset, latent_size)
 
 def load_data():
-    ecg = np.array(ut.read_pickle('data/MedianWave_train.pk1'))
-    ecg.reshape((-1, 180, 1))
+    ecg = np.array(ut.read_pickle('data/mw_train.pkl'))
     lb = ut.read_pickle('data/label_train.pk1')
     lb[lb=='N'] = 0
     lb[lb=='A'] = 1
     lb[lb=='O'] = 2
     lb[lb=='~'] = 3
     # lb = tf.keras.utils.to_categorical(lb, n_classes=4)
-    return [ecg, np.array(lb)]
+    return [ecg.reshape(-1, 180, 1), np.array(lb)]
 
 
 
 
 if __name__ == "__main__":
     
-    # latent_size = 100
-    # discriminator = define_discriminator((180, 1), 4)
-    # generator = define_generator((latent_size, ), 4)
-    # gan_model = define_gan(discriminator, generator)
-    # dataset = load_data()
+    latent_size = 100
+    c_model, d_model = define_discriminator((180, 1), 4)
+    g_model = define_generator((latent_size, ), 4)
+    gan_model = define_gan(d_model, g_model)
+    dataset = load_data()
     # # print(len(dataset[0]))
-    # train(discriminator, generator, gan_model, dataset, latent_size)
+    train(g_model, d_model, c_model, gan_model, dataset, latent_size)
 
-    g_model = define_generator((100,))
-    g_model.summary()
