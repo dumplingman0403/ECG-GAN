@@ -14,22 +14,23 @@ def custom_activation(in_val):
 def define_discriminator(input_shape, n_class=4):
 
     input_ecg = tf.keras.Input(input_shape)
-    lyr = layers.Conv1D(8, 3, activation=layers.LeakyReLU(alpha=0.2), padding='same')(input_ecg)
+    lyr = layers.Conv1D(32, 16, activation=layers.LeakyReLU(alpha=0.2), padding='same')(input_ecg)
     lyr = layers.BatchNormalization()(lyr)
     lyr = layers.MaxPooling1D()(lyr)
 
-    lyr = layers.Conv1D(16, 3, activation=layers.LeakyReLU(alpha=0.2), padding='same')(lyr)
+    lyr = layers.Conv1D(64, 16, activation=layers.LeakyReLU(alpha=0.2), padding='same')(lyr)
     lyr = layers.BatchNormalization()(lyr)
     lyr = layers.MaxPooling1D()(lyr)
 
-    lyr = layers.Conv1D(32, 3, activation=layers.LeakyReLU(alpha=0.2), padding='same')(lyr)
+    lyr = layers.Conv1D(128, 16, activation=layers.LeakyReLU(alpha=0.2), padding='same')(lyr)
     lyr = layers.BatchNormalization()(lyr)
     lyr = layers.MaxPooling1D()(lyr)
-    # lyr = layers.Flatten()(lyr)
-    lyr = layers.GRU(30)(lyr)
-    lyr = layers.Dropout(0.5)(lyr)
-    lyr = layers.GaussianNoise(0.2)(lyr)
+    lyr = layers.Flatten()(lyr)
+    # lyr = layers.GRU(30)(lyr)
+    # lyr = layers.Dropout(0.5)(lyr)
+    # lyr = layers.GaussianNoise(0.2)(lyr)
     lyr = layers.Dense(n_class)(lyr)
+    
     # supervised output
     c_out = layers.Activation('softmax')(lyr)  
     c_model = tf.keras.Model(input_ecg, c_out)
@@ -120,12 +121,15 @@ def generate_real_sample(dataset, n_sample):
 
 def summarize_performance(step, g_model, c_model, latent_size, dataset, n_sample=100):
 
-    # X, _ = generate_fake_sample(g_model, latent_size, n_sample)
+    X, _ = generate_fake_sample(g_model, latent_size, n_sample)
 
-    # for i in range(100):
-    #     plt.subplot(10, 10, i+1)
-    #     plt.axis('off')
-    #     plt.imshow(X[i, :, :])
+    for i in range(100):
+        plt.subplot(10, 10, i+1)
+        plt.axis('off')
+        plt.plot(X[i, :, :].reshape(180,))
+    filename = 'generated_plot_%04d.png' % (step + 1)
+    plt.savefig(filename)
+    plt.close()
     X, y = dataset
     _, acc = c_model.evaluate(X, y.astype(np.float16), verbose=0)
     print('Classifier Accuracy: %.3f%%' % (acc * 100))
@@ -158,9 +162,9 @@ def train(g_model, d_model, c_model, gan_model, dataset, latent_size, n_epochs=2
             summarize_performance(i, g_model, c_model, latent_size, dataset)
             
 
-def load_data():
-    ecg = np.array(ut.read_pickle('data/mw_train.pkl'))
-    lb = ut.read_pickle('data/label_train.pk1')
+def load_data(path_train, path_label):
+    ecg = np.array(ut.read_pickle(path_train))
+    lb = ut.read_pickle(path_label)
     lb[lb=='N'] = 0
     lb[lb=='A'] = 1
     lb[lb=='O'] = 2
@@ -172,11 +176,12 @@ def load_data():
 
 
 if __name__ == "__main__":
-    
+    PATH_TRAIN = 'data/mw_train.pkl'
+    PATH_LABEL = 'data/label_train.pk1'
     latent_size = 100
     c_model, d_model = define_discriminator((180, 1), 4)
     g_model = define_generator((latent_size, ), 4)
     gan_model = define_gan(d_model, g_model)
-    dataset = load_data()
+    dataset = load_data(PATH_TRAIN, PATH_LABEL)
     train(g_model, d_model, c_model, gan_model, dataset, latent_size)
 
