@@ -1,6 +1,8 @@
 .DS_Store
-*.pk1
+*.pkl
 __pycache__/
 Semi-Supervised-GAN.py
 AF_dataset/
 .vscode
+*.ipynb_checkpoints
+*.ipynb
