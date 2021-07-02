@@ -1,0 +1,7 @@
+numpy
+scipy
+pickle
+tensorflow
+matplotlib
+tqdm
+

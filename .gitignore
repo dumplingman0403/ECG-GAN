@@ -6,3 +6,6 @@ AF_dataset/
 .vscode
 *.ipynb_checkpoints
 *.ipynb
+test.py
+mit-bih-atrial-fibrillation-database
+physionet.org

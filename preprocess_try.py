@@ -14,7 +14,7 @@ def load_data(path, save=False):
             if '.mat' in file:
                 name = file.replace('.mat', '')
                 ECG_dict[name] = loadmat(os.path.join(r, file))['val'][0]/1000
-    labels = np.array(pd.read_csv(os.path.join(path, 'REFERENCE.csv'), header=None))
+    labels = np.array(pd.read_csv(os.path.join(path, 'REFERENCE-original.csv'), header=None))
 
     for i in tqdm(range(len(labels))):
         sg = labels[i,0]
@@ -22,7 +22,7 @@ def load_data(path, save=False):
 
     if save:
         with open('ECG_data.pkl', 'wb') as f:
-                pickle.dump(ECG_dict,f)
+            pickle.dump(ECG_dict,f)
     return ECG_dict
 
 
@@ -84,7 +84,11 @@ def process_signal(ecg_dataset, save=False):
 
     return median_wave
 
-    
+if __name__ == '__main__':
+
+    PATH = 'AF_dataset'
+    ecg_dataset = load_data(PATH, save=True)
+    median_wave = process_signal(ecg_dataset, save=True)
       
 
 
