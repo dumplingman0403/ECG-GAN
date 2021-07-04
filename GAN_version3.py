@@ -6,7 +6,8 @@ from tensorflow.keras.layers import LeakyReLU
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.optimizers import Adam
 import matplotlib.pyplot as plt
-
+import os
+import pickle
 class DCGAN:
 
     def __init__(self, input_shape=(180, 1), latent_size=100):
@@ -120,9 +121,49 @@ class DCGAN:
             g_loss = self.combine.train_on_batch(noise, vaild)
 
             print("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss))
-    
+
+            if epoch % save_interval == 0:
+                self.save_image(epoch)
+
     def save_image(self, epoch):
+
+        if os.path.isdir('image/') != True:
+            os.mkdir('image/')
+
+        r, c = 3, 3
+        noise = self.gen_latent(r*c)
+
+        signals = self.generator(noise)
+
+        fig, axs = plt.subplots(r, c)
+        cnt=0
+        for i in range(r):
+            for j in range(c):
+                axs[i, j].plot(signals[cnt])
+                cnt += 1
+
+        fig.savefig('image/ecg_sig_%d.png' %epoch )
+        plt.close()
+
+    def prepare_input(self, dataset):
+
+        if type(dataset) != dict:
+            raise TypeError('Dateset type must be dictionary.')
+        X_train = []
+        y = []
+        for sg_id in dataset.keys():
+            lb = str(dataset[sg_id][0])
+            if lb != '~':
+                signal = dataset[sg_id][1]
+                for hb in signal:
+                    X_train.append(hb)
+                    y.append(lb)
         
-        pass
+        X_train = np.array(X_train).reshape(-1, X_train.shape[1], 1)
+        y = np.array(y)
+        return X_train, y
+
+
+
 
 
