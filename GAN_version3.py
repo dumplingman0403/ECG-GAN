@@ -1,13 +1,14 @@
 import numpy as np
 from tensorflow.keras.layers import Input, Dense, Reshape, Dropout, Flatten
 from tensorflow.keras.layers import BatchNormalization, Activation, UpSampling1D
-from tensorflow.keras.layers import Conv1DTranspose, Conv1D
-from tensorflow.keras.layers import LeakyReLU
+from tensorflow.keras.layers import Conv1DTranspose, Conv1D, Bidirectional, LSTM
+from tensorflow.keras.layers import LeakyReLU, MaxPooling1D
 from tensorflow.keras.models import Sequential, Model
 from tensorflow.keras.optimizers import Adam
 import matplotlib.pyplot as plt
 import os
 import pickle
+
 class DCGAN:
 
     def __init__(self, input_shape=(180, 1), latent_size=100):
@@ -20,7 +21,7 @@ class DCGAN:
         self.generator = self.build_generator()
         z = Input(shape=(self.latent_size, ))
         signal = self.generator(z)
-
+        
         self.discrimintor.trainable = False
 
         valid = self.discrimintor(signal)
@@ -32,29 +33,12 @@ class DCGAN:
         
         model = Sequential(name='Generator')
         model.add(Reshape((self.latent_size, 1)))
-        model.add(Conv1D(256, kernel_size=4, padding='same'))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Activation('relu'))
-        model.add(UpSampling1D())
-        model.add(Conv1D(128, kernel_size=4, padding='same'))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Activation('relu'))
-        model.add(UpSampling1D())
-        model.add(Conv1D(64, kernel_size=4, padding='same'))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Activation('relu'))
-        model.add(UpSampling1D())
-
-        model.add(Conv1D(32, kernel_size=4, strides=2,padding='same'))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Activation('relu'))
-        model.add(Conv1D(16, kernel_size=4, strides=2, padding='same'))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Activation('relu'))
-        model.add(Conv1D(1, kernel_size=4, padding='same'))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Activation('relu'))
+        model.add(Bidirectional(LSTM(1, return_sequences=True)))
         model.add(Flatten())
+        model.add(Dense(100))
+        model.add(LeakyReLU(alpha=0.2))
+        model.add(Dense(150))
+        model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(180 * 1))
         model.add(Activation('tanh'))
         model.add(Reshape(self.input_shape))
@@ -70,23 +54,25 @@ class DCGAN:
 
     def bulid_discrimintor(self):
         model = Sequential(name='Discriminator')
-        model.add(Conv1D(32, kernel_size=4, strides=2, input_shape=self.input_shape, padding='same'))
+        model.add(Conv1D(8, kernel_size=3, strides=1, input_shape=self.input_shape, padding='same'))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
-        model.add(BatchNormalization(momentum=0.8))
-        model.add(Conv1D(64, kernel_size=4, strides=2, input_shape=self.input_shape, padding='same'))
+        # model.add(Dropout(0.25))
+        model.add(MaxPooling1D(3))
+        
+        model.add(Conv1D(16, kernel_size=3, strides=1, input_shape=self.input_shape, padding='same'))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
+        # model.add(Dropout(0.25))
+        model.add(MaxPooling1D(3, strides=2))
 
-        model.add(Conv1D(128, kernel_size=4, strides=2, input_shape=self.input_shape, padding='same'))
-        model.add(BatchNormalization(momentum=0.8))
+        model.add(Conv1D(32, kernel_size=3, strides=2, input_shape=self.input_shape, padding='same'))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
+        # model.add(Dropout(0.25))
+        model.add(MaxPooling1D(3, strides=2))
 
-        model.add(Conv1D(256, kernel_size=4, strides=2, input_shape=self.input_shape, padding='same'))
-        model.add(BatchNormalization(momentum=0.8))
+        model.add(Conv1D(64, kernel_size=3, strides=2, input_shape=self.input_shape, padding='same'))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dropout(0.25))
+        # model.add(Dropout(0.25))
+        model.add(MaxPooling1D(3, strides=2))
 
         model.add(Flatten())
         model.add(Dense(1, activation='sigmoid'))
@@ -97,10 +83,6 @@ class DCGAN:
         validity = model(signal)
 
         return Model(inputs=signal, outputs=validity)
-        
-
-    def gen_latent(self, batch_size):
-        return np.random.normal(0, 1, size=(batch_size, self.latent_size))
     
     def train(self, epochs, X_train, batch_size=128, save_interval=50):
         vaild = np.ones((batch_size, 1))
@@ -109,7 +91,7 @@ class DCGAN:
         for epoch in range(epochs):
             idx = np.random.randint(0, X_train.shape[0], batch_size)
             signals = X_train[idx]
-            noise = self.gen_latent(batch_size)
+            noise = self.generate_noise(batch_size)
 
             gen_signals = self.generator.predict(noise)
 
@@ -131,7 +113,7 @@ class DCGAN:
             os.mkdir('image/')
 
         r, c = 3, 3
-        noise = self.gen_latent(r*c)
+        noise = self.generate_noise(r*c)
 
         signals = self.generator(noise)
 
@@ -162,6 +144,16 @@ class DCGAN:
         X_train = np.array(X_train).reshape(-1, X_train.shape[1], 1)
         y = np.array(y)
         return X_train, y
+
+    def generate_noise(self, batch_size, sinwave=True):
+
+        if sinwave:
+            x = np.linspace(-np.pi, np.pi, self.latent_size)
+            noise = 0.1 * np.random.random_sample((batch_size, self.latent_size)) + 0.9 * np.sin(x)
+        else:
+            noise = np.random.normal(0, 1, size=(batch_size, self.latent_size))
+        return noise
+
 
 
 

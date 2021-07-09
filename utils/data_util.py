@@ -134,3 +134,23 @@ class DataLoader():
         scale = max_val - min_val
         scale_signals = signals/scale
         return (scale_signals, scale)
+
+    def specify_range(self, signals, min_val=-1, max_val=1):
+        """
+        Specify acceptable range, drop signal if signal value is out of range.
+        """
+
+        if not signals:
+            raise ValueError("No signals data.")
+        if type(signals) != np.ndarray :
+            signals = np.array(signals)
+        select_signals = []
+        for sg in signals:
+            min_sg = np.min(sg)
+            max_sg = np.max(sg)
+
+            if (min_sg >= -1 and max_val <= 1):
+                select_signals.append(sg)
+        
+        return np.array(select_signals)
+
