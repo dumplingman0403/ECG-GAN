@@ -130,7 +130,7 @@ class DataLoader():
         signals: np.array
         """
         if type(signals) != np.ndarray:
-            signal = np.array(signal)
+            signal = np.array(signals)
         
         max_val = np.max(signals)
         min_val = np.min(signals)
