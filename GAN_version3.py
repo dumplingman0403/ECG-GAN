@@ -11,7 +11,7 @@ import pickle
 
 class DCGAN:
 
-    def __init__(self, input_shape=(180, 1), latent_size=100):
+    def __init__(self, input_shape=(180, 1), latent_size=100, random_sine = True):
         
         self.input_shape = input_shape
         self.latent_size = latent_size
@@ -21,7 +21,7 @@ class DCGAN:
         self.generator = self.build_generator()
         z = Input(shape=(self.latent_size, ))
         signal = self.generator(z)
-        
+        self.random_sine = random_sine
         self.discrimintor.trainable = False
 
         valid = self.discrimintor(signal)
@@ -91,7 +91,7 @@ class DCGAN:
         for epoch in range(epochs):
             idx = np.random.randint(0, X_train.shape[0], batch_size)
             signals = X_train[idx]
-            noise = self.generate_noise(batch_size)
+            noise = self.generate_noise(batch_size, self.random_sine)
 
             gen_signals = self.generator.predict(noise)
 
@@ -113,7 +113,7 @@ class DCGAN:
             os.mkdir('image/')
 
         r, c = 3, 3
-        noise = self.generate_noise(r*c)
+        noise = self.generate_noise(r*c, self.random_sine)
 
         signals = self.generator.predict(noise)
 
@@ -145,7 +145,7 @@ class DCGAN:
         y = np.array(y)
         return X_train, y
 
-    def generate_noise(self, batch_size, sinwave=True):
+    def generate_noise(self, batch_size, sinwave=False):
 
         if sinwave:
             x = np.linspace(-np.pi, np.pi, self.latent_size)
@@ -179,6 +179,8 @@ if __name__ == "__main__":
     SAVE_INTRIVAL = 100
     BATCH_SIZE = 128
     INPUT_SHAPE = (180, 1)
+    RANDOM_SINE = False
+
     X_train = pickle.load(open('X_train.pkl', 'rb'))
     dcgan = DCGAN(INPUT_SHAPE, LATENT_SIZE) 
     X_train = dcgan.specify_range(X_train)
