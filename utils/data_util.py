@@ -125,7 +125,10 @@ class DataLoader():
         return (X_train, y)
 
     def scale_signal(self, signals):
-
+        """
+        rescale signals
+        signals: np.array
+        """
         if type(signals) != np.ndarray:
             signal = np.array(signal)
         

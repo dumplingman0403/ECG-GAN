@@ -15,7 +15,7 @@ class DCGAN:
         
         self.input_shape = input_shape
         self.latent_size = latent_size
-        optimizer = Adam(lr=0.0002, beta_1=0.5)
+        optimizer = Adam(lr=0.0002)
         self.discrimintor = self.bulid_discrimintor()
         self.discrimintor.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
         self.generator = self.build_generator()
