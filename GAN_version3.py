@@ -115,7 +115,7 @@ class DCGAN:
         r, c = 3, 3
         noise = self.generate_noise(r*c)
 
-        signals = self.generator(noise)
+        signals = self.generator.predict(noise)
 
         fig, axs = plt.subplots(r, c)
         cnt=0
@@ -153,6 +153,38 @@ class DCGAN:
         else:
             noise = np.random.normal(0, 1, size=(batch_size, self.latent_size))
         return noise
+
+    def specify_range(self, signals, min_val=-1, max_val=1):
+        """
+        Specify acceptable range, drop signal if signal value is out of range.
+        """
+
+        if signals is None:
+            raise ValueError("No signals data.")
+        if type(signals) != np.ndarray :
+            signals = np.array(signals)
+        select_signals = []
+        for sg in signals:
+            min_sg = np.min(sg)
+            max_sg = np.max(sg)
+
+            if (min_sg >= min_val and max_sg <= max_val):
+                select_signals.append(sg)
+        
+        return np.array(select_signals)
+
+if __name__ == "__main__":
+    EPOCHS = 3000
+    LATENT_SIZE = 50
+    SAVE_INTRIVAL = 100
+    BATCH_SIZE = 128
+    INPUT_SHAPE = (180, 1)
+    X_train = pickle.load(open('X_train.pkl', 'rb'))
+    dcgan = DCGAN(INPUT_SHAPE, LATENT_SIZE) 
+    X_train = dcgan.specify_range(X_train)
+    X_train = X_train.reshape(-1, 180, 1)
+    dcgan.train(EPOCHS, X_train, BATCH_SIZE, SAVE_INTRIVAL)
+    print("Complete!!!")
 
 
 
