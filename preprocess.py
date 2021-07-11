@@ -1,59 +1,101 @@
 import numpy as np
 import biosppy as bio
 from tqdm import tqdm
+import os
+import pickle
+import pandas as pd
+from scipy.io import loadmat
 
 
-SAMPLE_RATE = 300  # sample rate 300Hz
+def load_data(path, save=False):
+    ECG_dict = {}
+    for r, d, f in os.walk(path):
+        for file in tqdm(f):
+            if '.mat' in file:
+                name = file.replace('.mat', '')
+                ECG_dict[name] = loadmat(os.path.join(r, file))['val'][0]/1000
+    labels = np.array(pd.read_csv(os.path.join(path, 'REFERENCE-original.csv'), header=None))
+
+    for i in tqdm(range(len(labels))):
+        sg = labels[i,0]
+        ECG_dict[sg] = [labels[i, 1], ECG_dict[sg]]
+
+    if save:
+        with open('ECG_data.pkl', 'wb') as f:
+            pickle.dump(ECG_dict,f)
+    return ECG_dict
 
 
-class PreprocessECG(object):
+def extract_heartbeats(signal, sampling_rate=300):
+    if signal is None:
+        raise TypeError("Please specify an input signal.")
 
-    def __init__(self):
-        self.sample_rate = SAMPLE_RATE
-
-    def run_preprocess(self, ECG_data):
-        print("Start processing....\n")
-        # Filtered_ECG = []
-        Heartbeat_ECG = []
-        # SelectHeartbeat_ECG = []
-        for i, ecg in tqdm(enumerate(ECG_data)):
-            # ts, filtered, rpeaks, templates_ts, templates, hr_rate_ts, hr_rate = bio.signals.ecg.ecg(
-            #     ecg, self.sample_rate, show=False)
-            _, _, _, templates_ts, templates, _, _ = bio.signals.ecg.ecg(
-                ecg, self.sample_rate, show=False)
-            Heartbeat_ECG.append(templates)
-        print('Complete.\n')
-        return Heartbeat_ECG
-
-    def select_median_wave(self, heartbeat):
-        rpeak = []
-        for hb in heartbeat:
-            rpeak.append(np.max(hb))
-        
-        rpeak_sort = sorted(rpeak.copy())
-        med_rpeak = rpeak_sort[len(rpeak_sort)//2]
-        med_idx = rpeak.index(med_rpeak)
-        med_wave = heartbeat[med_idx]
-        return med_wave
-
-    def run_ecg_preprocess(self, ECG_data):
-        heartbeat= self.run_preprocess(ECG_data)
-        med_wave_list = []
-        print('start selecting median wave...\n')
-        for hb in tqdm(heartbeat):
-            mv = self.select_median_wave(hb)
-            med_wave_list.append(mv)
-        print('complete.\n')
-        return med_wave_list
-
-if __name__ == "__main__":
+    signal = np.array(signal)
+    sampling_rate = float(sampling_rate)
     
-    import pickle
-    data = np.array(pickle.load(open('data/data_train.pk1', 'rb')))
-    ecg_data = data[:, 1]
-    prep_ecg = PreprocessECG()
-    MedianWave = prep_ecg.run_ecg_preprocess(ecg_data)
-    with open('mw_train.pkl', 'wb') as f:
-        pickle.dump(MedianWave, f)
+    # filter signal
+    order = int(0.3 * sampling_rate)
+    filtered, _, _ = bio.signals.tools.filter_signal(signal=signal,
+                                                     ftype='FIR',
+                                                     band='bandpass',
+                                                     order=order,
+                                                     frequency=[3, 45],
+                                                     sampling_rate=sampling_rate)
+    
+    # segment
+    rpeaks,  = bio.signals.ecg.hamilton_segmenter(signal=filtered, sampling_rate=sampling_rate)
+    # correction r-peak
+    rpeaks,  = bio.signals.ecg.correct_rpeaks(signal=filtered,
+                                            rpeaks=rpeaks,
+                                            sampling_rate=sampling_rate,
+                                            tol=0.05)
+    # extract templates
+    heartbeats, rpeaks = bio.signals.ecg.extract_heartbeats(signal=filtered, 
+                                                            rpeaks=rpeaks,
+                                                            sampling_rate=sampling_rate,
+                                                            before=0.2,
+                                                            after=0.4)
+    return (heartbeats, rpeaks, filtered)
 
+def select_medwave(heartbeats):
+
+    r_peaks = np.max(heartbeats, axis=1)
+    med_val = np.sort(r_peaks)[len(r_peaks)//2]
+    med_idx = list(r_peaks).index(med_val) #avoid mult value
+    med_wave = heartbeats[med_idx]
+
+    return med_wave
+
+
+def process_signal(ecg_dataset, save=False):
+
+    if type(ecg_dataset) != dict:
+        raise TypeError('Wrong input data type, correct type: dict')
+
+    median_wave = {}
+    for i in tqdm(ecg_dataset.keys()):
+        lb = ecg_dataset[i][0]
+        sg = ecg_dataset[i][1]
+        hb, rp, filt_sg = extract_heartbeats(signal=sg, sampling_rate=300)
+        median_wave[i] = [lb,select_medwave(hb)]
+    if save:
+        with open('ECG_medwave.pkl', 'wb') as f:
+            pickle.dump(median_wave,f)
+
+    return median_wave
+
+if __name__ == '__main__':
+
+    PATH = 'AF_dataset'
+    ecg_dataset = load_data(PATH, save=True)
+    median_wave = process_signal(ecg_dataset, save=True)
+      
+
+
+
+
+
+
+
+    
 
