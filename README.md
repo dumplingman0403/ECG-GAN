@@ -11,3 +11,7 @@ pip install -r requirement.txt
 ```
 ./download.sh
 ```
+
+## To do list
+- [x] process ECG dataset - AF Classification Challenge 2017
+- [x] process ECG dataset - MIT-BIH Arrhythmia Database
