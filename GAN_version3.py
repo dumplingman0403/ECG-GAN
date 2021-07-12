@@ -39,7 +39,7 @@ class DCGAN:
         model.add(LeakyReLU(alpha=0.2))
         model.add(Dense(150))
         model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(180 * 1))
+        model.add(Dense(self.input_shape[0]))
         model.add(Activation('tanh'))
         model.add(Reshape(self.input_shape))
         noise = Input(shape=(self.latent_size,))
@@ -184,7 +184,7 @@ if __name__ == "__main__":
     X_train = pickle.load(open('X_train.pkl', 'rb'))
     dcgan = DCGAN(INPUT_SHAPE, LATENT_SIZE) 
     X_train = dcgan.specify_range(X_train)
-    X_train = X_train.reshape(-1, 180, 1)
+    X_train = X_train.reshape(-1, INPUT_SHAPE[0], INPUT_SHAPE[1])
     dcgan.train(EPOCHS, X_train, BATCH_SIZE, SAVE_INTRIVAL)
     print("Complete!!!")
 
