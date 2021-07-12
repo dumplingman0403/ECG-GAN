@@ -1,4 +1,4 @@
-# Improve ECG classification via GAN 
+# Synthesis ECG signals via Generative adversarial networks
 
 - rnn.py  RNN classifier
 
