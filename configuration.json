@@ -1,1 +1,15 @@
 
+{
+    "AA_DATASET_DIR" : "AA_dataset/",
+    "AF_LABEL_PATH" : "AF_dataset/REFERENCE-original.csv",
+    "AF_DATASET_DIR" : "AF_dataset/",
+    "AA_SAMPLE_RATE" : 360,
+    "AF_SAMPLE_RATE" : 300,
+    "EPOCHS" : 3000,
+    "LATENT_SIZE" : 50,
+    "SAVE_INTRIVAL" : 100,
+    "BATCH_SIZE" : 128,
+    "INPUT_SHAPE" : [180, 1],
+    "RANDOM_SINE" : false
+
+}

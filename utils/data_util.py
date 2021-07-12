@@ -6,12 +6,13 @@ import pandas as pd
 import pickle
 import biosppy as bio
 from sklearn.preprocessing import MinMaxScaler
+import wfdb
 
 class DataLoader():
 
 
 
-    def load_data(self, data_path, label_path, save=False):
+    def load_af_challenge_db(self, data_path, label_path, save=False, save_name='ECG_data.pkl'):
         print('Load data from directory...')
         ECG_dict = {}
         for r, d, f in os.walk(data_path):  #root, directory, files
@@ -26,7 +27,7 @@ class DataLoader():
             ECG_dict[sg] = [labels[i, 1], ECG_dict[sg]]
 
         if save:
-            with open('ECG_data.pkl', 'wb') as f:
+            with open(save_name, 'wb') as f:
                 pickle.dump(ECG_dict, f)
         
         return ECG_dict
@@ -74,7 +75,7 @@ class DataLoader():
 
         return med_wave
 
-    def process_signals(self, signals, sampling_rate, save=False):
+    def process_signals(self, signals, sampling_rate, save=False, save_name='ECG_heartbeats.pkl', aa_data = False):
         
         if signals is None:
             raise TypeError("Please specify input signals.")
@@ -83,19 +84,27 @@ class DataLoader():
         if type(signals) != dict:
             raise TypeError('Input type error, signals must be dictionary.')
         for sg_id in tqdm(signals.keys()):
-            sg = signals[sg_id][1]
-            lb = str(signals[sg_id][0])
+            
+            if aa_data:
+                sg = signals[sg_id]
+            else:
+                sg = signals[sg_id][1]
+                lb = str(signals[sg_id][0])
             heartbeats, rpeaks, filtered = self.extract_heartbeats(sg, sampling_rate=sampling_rate)
-            ECG_heartbeats[sg_id] = [lb, heartbeats]
+
+            if aa_data:
+                ECG_heartbeats[sg_id] = heartbeats
+            else:
+                ECG_heartbeats[sg_id] = [lb, heartbeats]
         
         if save:
-            with open('ECG_heartbeats.pkl', 'wb') as f:
+            with open(save_name, 'wb') as f:
                 pickle.dump(ECG_heartbeats, f)
         
         return ECG_heartbeats
 
 
-    def prepare_input(self, dataset, save=False, normalize=False):
+    def prepare_input_challenge(self, dataset, save=False, normalize=False, save_name = ('X_train_af.pkl', 'y_af.pkl')):
 
         if type(dataset) != dict:
             raise TypeError('Dateset type must be dictionary.')
@@ -103,7 +112,7 @@ class DataLoader():
         y = []
         for sg_id in dataset.keys():
             lb = str(dataset[sg_id][0])
-            if lb != '~':
+            if lb != '~':    # discard noise ECG which can't be identify 
                 signal = dataset[sg_id][1]
                 for hb in signal:
 
@@ -112,14 +121,18 @@ class DataLoader():
 
                     X_train.append(hb)
                     y.append(lb)
-
+        
         X_train = np.round(np.array(X_train), 4)
         y = np.array(y)
-
+        y[y=='N'] = 0   # label normal ECG to 0 
+        y[y=='A'] = 1   # label af ECG to 1 
+        y[y=='O'] = 2   # label other ECG to 2
+        y = y.astype(int)
+         
         if save:
-            with open('X_train.pkl', 'wb') as f:
+            with open(save_name[0], 'wb') as f:
                 pickle.dump(X_train, f)
-            with open('y.pkl', 'wb') as f:
+            with open(save_name[1], 'wb') as f:
                 pickle.dump(y, f)
         
         return (X_train, y)
@@ -156,4 +169,47 @@ class DataLoader():
                 select_signals.append(sg)
         
         return np.array(select_signals)
+
+    def load_arrhythmia_DB(self, path, save=False):
+
+        file_list = os.listdir(path)
+        ECG = {}
+        print('Load data from directory...')
+        for file in tqdm(file_list):
+
+            if '.dat' in file:
+                file_name = file.replace('.dat', '')
+                record = wfdb.io.rdsamp(os.path.join(path,file_name))
+                
+                ECG[file_name] = record[0][:, 0]
+        if save:
+            with open("arrhyth_dataset.pkl", "wb") as f:
+                pickle.dump(ECG, f)
+
+        return ECG
+
+    def prepare_input_arrhythmia(self, dataset, save=False, save_name=('X_train_aa.pkl', 'y_aa.pkl')):
+        if type(dataset) != dict:
+            raise TypeError('Dateset type must be dictionary.')
+        
+        X_train = []
+        y = []
+        for sg_id in dataset.keys():
+
+            sg = dataset[sg_id]
+            for signal in sg:
+                X_train.append(signal)
+                y.append(sg_id)
+        
+        X_train = np.round(np.array(X_train), 4)
+        y = np.array(y).astype(int)
+
+        if save:
+            with open(save_name[0], 'wb') as f:
+                pickle.dump(X_train, f)
+            with open(save_name[1], 'wb') as f:
+                pickle.dump(y, f)
+
+        return (X_train, y)
+
 

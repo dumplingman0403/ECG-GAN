@@ -61,7 +61,7 @@ def process_signals(signals, sampling_rate, save=False):
     ECG_heartbeats = {}
     if type(signals) != dict:
         raise TypeError('Input type error, signals must be dictionary.')
-
+    label = []
     for sg_id in tqdm(signals.keys()):
         sg = signals[sg_id]
         # lb = str(signals[sg_id][0])
