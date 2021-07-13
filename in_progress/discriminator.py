@@ -49,25 +49,30 @@ class Discriminator():
 
         return Model(inputs=signal, outputs=validity)
 
-    def D_v2(self):
+    def D_v2(self):    
+        '''
+        Paper: Synthesis of Realistic ECG using Generative Adversarial Networks 
+        url:https://arxiv.org/abs/1909.09150
+        '''
 
+        
         model = Sequential(name='Discriminator_v2')
-        model.add(Conv1D(8, kernel_size=3, strides=1, input_shape=self.input_shape, padding='same'))
+        model.add(Conv1D(3, kernel_size=3, strides=1, input_shape=self.input_shape, padding='same'))
         model.add(LeakyReLU(alpha=0.2))
         # model.add(Dropout(0.25))
         model.add(MaxPooling1D(3))
         
-        model.add(Conv1D(16, kernel_size=3, strides=1, input_shape=self.input_shape, padding='same'))
+        model.add(Conv1D(5, kernel_size=3, strides=1, input_shape=self.input_shape, padding='same'))
         model.add(LeakyReLU(alpha=0.2))
         # model.add(Dropout(0.25))
         model.add(MaxPooling1D(3, strides=2))
 
-        model.add(Conv1D(32, kernel_size=3, strides=2, input_shape=self.input_shape, padding='same'))
+        model.add(Conv1D(8, kernel_size=3, strides=2, input_shape=self.input_shape, padding='same'))
         model.add(LeakyReLU(alpha=0.2))
         # model.add(Dropout(0.25))
         model.add(MaxPooling1D(3, strides=2))
 
-        model.add(Conv1D(64, kernel_size=3, strides=2, input_shape=self.input_shape, padding='same'))
+        model.add(Conv1D(12, kernel_size=3, strides=2, input_shape=self.input_shape, padding='same'))
         model.add(LeakyReLU(alpha=0.2))
         # model.add(Dropout(0.25))
         model.add(MaxPooling1D(3, strides=2))
