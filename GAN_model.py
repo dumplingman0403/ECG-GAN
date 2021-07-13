@@ -11,7 +11,7 @@ import pickle
 
 class DCGAN:
 
-    def __init__(self, input_shape=(180, 1), latent_size=100, random_sine = True):
+    def __init__(self, input_shape=(180, 1), latent_size=100, random_sine = True, scale=1):
         
         self.input_shape = input_shape
         self.latent_size = latent_size
@@ -25,7 +25,7 @@ class DCGAN:
         self.discrimintor.trainable = False
 
         valid = self.discrimintor(signal)
-
+        self.scale = scale
         self.combine = Model(z, valid)
         self.combine.compile(loss='binary_crossentropy', optimizer=optimizer)
 
@@ -33,7 +33,7 @@ class DCGAN:
         
         model = Sequential(name='Generator')
         model.add(Reshape((self.latent_size, 1)))
-        model.add(Bidirectional(LSTM(1, return_sequences=True)))
+        model.add(Bidirectional(LSTM(16, return_sequences=True)))
         model.add(Flatten())
         model.add(Dense(100))
         model.add(LeakyReLU(alpha=0.2))
@@ -106,6 +106,8 @@ class DCGAN:
 
             if epoch % save_interval == 0:
                 self.save_image(epoch)
+        
+        self.save_image(epoch)
 
     def save_image(self, epoch):
 
@@ -115,7 +117,7 @@ class DCGAN:
         r, c = 3, 3
         noise = self.generate_noise(r*c, self.random_sine)
 
-        signals = self.generator.predict(noise)
+        signals = self.generator.predict(noise) * self.scale
 
         fig, axs = plt.subplots(r, c)
         cnt=0
@@ -173,20 +175,20 @@ class DCGAN:
         
         return np.array(select_signals)
 
-if __name__ == "__main__":
-    EPOCHS = 3000
-    LATENT_SIZE = 50
-    SAVE_INTRIVAL = 100
-    BATCH_SIZE = 128
-    INPUT_SHAPE = (180, 1)
-    RANDOM_SINE = False
+# if __name__ == "__main__":
+#     EPOCHS = 3000
+#     LATENT_SIZE = 50
+#     SAVE_INTRIVAL = 100
+#     BATCH_SIZE = 128
+#     INPUT_SHAPE = (180, 1)
+#     RANDOM_SINE = False
 
-    X_train = pickle.load(open('X_train.pkl', 'rb'))
-    dcgan = DCGAN(INPUT_SHAPE, LATENT_SIZE) 
-    X_train = dcgan.specify_range(X_train)
-    X_train = X_train.reshape(-1, INPUT_SHAPE[0], INPUT_SHAPE[1])
-    dcgan.train(EPOCHS, X_train, BATCH_SIZE, SAVE_INTRIVAL)
-    print("Complete!!!")
+#     X_train = pickle.load(open('X_train.pkl', 'rb'))
+#     dcgan = DCGAN(INPUT_SHAPE, LATENT_SIZE) 
+#     X_train = dcgan.specify_range(X_train)
+#     X_train = X_train.reshape(-1, INPUT_SHAPE[0], INPUT_SHAPE[1])
+#     dcgan.train(EPOCHS, X_train, BATCH_SIZE, SAVE_INTRIVAL)
+#     print("Complete!!!")
 
 
 
