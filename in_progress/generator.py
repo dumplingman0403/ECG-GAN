@@ -13,7 +13,7 @@ class Generator:
     def __init__(self, latent_size):
         self.latent_size = latent_size
 
-    def G_vl(self):
+    def G_vl(self): #try_1
 
         model = Sequential(name='Generator_v1')
         model.add(Reshape((self.latent_size, 1)))
@@ -49,7 +49,7 @@ class Generator:
 
         return Model(inputs=noise, outputs=signal) 
 
-    def G_v2(self):
+    def G_v2(self):  #try_2
         model = Sequential(name='Generator_v2')
         model.add(Reshape((self.latent_size, 1)))
         model.add(Bidirectional(LSTM(1, return_sequences=True)))
@@ -68,11 +68,16 @@ class Generator:
 
         return Model(inputs=noise, outputs=signal) 
 
-    def G_v3(self):
-        model = Sequential(name='Generator')
+    def G_v3(self): 
+        '''
+        Paper: Synthesis of Realistic ECG using Generative Adversarial Networks - LSTM generator
+        url:https://arxiv.org/abs/1909.09150
+        '''
+       
+        model = Sequential(name='Generator_v3')
         model.add(Reshape((self.latent_size, 1)))
-        model.add(Bidirectional(LSTM(16, return_sequences=True)))
-        model.add(Bidirectional(LSTM(16, return_sequences=True)))
+        model.add(LSTM(50, return_sequences=True))
+        model.add(LSTM(50, return_sequences=True))
         model.add(Flatten())
         model.add(Dense(self.input_shape[0]))
         model.add(Activation('tanh'))
@@ -81,4 +86,56 @@ class Generator:
         signal = model(noise)
 
         model.summary()
+        return Model(inputs=noise, outputs=signal) 
+
+    def G_v4(self): 
+        '''
+        Paper: Synthesis of Realistic ECG using Generative Adversarial Networks - BiLSTM generator
+        url:https://arxiv.org/abs/1909.09150
+        '''
+        model = Sequential(name='Generator_v4')
+        model.add(Reshape((self.latent_size, 1)))
+        model.add(Bidirectional(LSTM(50, return_sequences=True)))
+        model.add(Bidirectional(LSTM(50, return_sequences=True)))
+        model.add(Flatten())
+        model.add(Dense(self.input_shape[0]))
+        model.add(Activation('tanh'))
+        noise = Input(shape=(self.latent_size,))
+        signal = model(noise)
+
+        model.summary()
+        return Model(inputs=noise, outputs=signal) 
+
+    def G_v5(self):
+        '''
+        url:https://github.com/MikhailMurashov/ecgGAN
+        '''
+
+        model = Sequential(name='Generator_v1')
+        model.add(Reshape((self.latent_size, 1)))
+        model.add(Bidirectional(LSTM(64, return_sequences=True)))
+
+        model.add(Conv1D(filters=128, kernel_size=16, strides=1, padding='same'))
+        model.add(LeakyReLU())
+    
+        model.add(Conv1D(filters=64, kernel_size=16, strides=1, padding='same'))
+        model.add(LeakyReLU())
+        
+        model.add(UpSampling1D(2))
+        
+        model.add(Conv1D(filters=32, kernel_size=16, strides=1, padding='same'))
+        model.add(LeakyReLU())
+        
+        model.add(Conv1D(filters=16, kernel_size=16, strides=1, padding='same'))
+        model.add(LeakyReLU())
+
+        model.add(Dense(self.input_shape[0]))
+        model.add(Activation('tanh'))
+        model.add(Reshape(self.input_shape))
+
+        noise = Input(shape=(self.latent_size,))
+        signal = model(noise)
+
+        model.summary()
+
         return Model(inputs=noise, outputs=signal) 
