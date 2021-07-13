@@ -1,6 +1,6 @@
 #!/bin/sh
 
-sudo apt install unzip
+# sudo brew install unzip
 
 wget -O training2017.zip https://physionet.org/files/challenge-2017/1.0.0/training2017.zip?download
 unzip training2017.zip

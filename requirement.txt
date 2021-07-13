@@ -4,4 +4,6 @@ pickle
 tensorflow
 matplotlib
 tqdm
+wfdb
+
 

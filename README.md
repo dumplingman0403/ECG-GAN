@@ -1,6 +1,5 @@
 # Synthesis ECG signals via Generative adversarial networks
 
-- rnn.py  RNN classifier
 
 ## Installation
 ```bash
@@ -11,9 +10,14 @@ pip install -r requirement.txt
 ### download dataset
 - option 1
 ```
-./download.sh
+sh download.sh
 ```
-- download from website 
+if you haven't install `unzip`, install `unzip` package first before run `download.sh`<br>
+install guildline: <br>
+[General](https://www.tecmint.com/install-zip-and-unzip-in-linux/) <br>
+[Homebrew](https://formulae.brew.sh/formula/unzip)
+- option 2:
+    download from website 
     - [AF Classification from a Short Single Lead ECG Recording - The PhysioNet Computing in Cardiology Challenge 2017](https://physionet.org/content/challenge-2017/1.0.0/training2017.zip)
     - [MIT-BIH Arrhythmia Database](https://physionet.org/static/published-projects/mitdb/mit-bih-arrhythmia-database-1.0.0.zip)
 
@@ -25,5 +29,6 @@ python3 process_ecg.py
 - [x] process ECG dataset - AF Classification Challenge 2017
 - [x] process ECG dataset - MIT-BIH Arrhythmia Database
 - [x] design GAN framework
-- [ ] hyperparameter model 
+- [x] hyperparameter model
+    - [ ] mode collapse
 - [ ] validation
