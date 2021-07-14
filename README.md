@@ -1,7 +1,7 @@
 # Synthesis ECG signals via Generative adversarial networks
 
 
-## Installation
+## Setup
 ```bash
 pip install -r requirement.txt
 ```
