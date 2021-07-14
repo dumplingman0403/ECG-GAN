@@ -13,7 +13,10 @@ class Generator:
     def __init__(self, latent_size):
         self.latent_size = latent_size
 
-    def G_vl(self): #try_1
+    def G_vl(self): 
+        '''
+        proposed method
+        '''
 
         model = Sequential(name='Generator_v1')
         model.add(Reshape((self.latent_size, 1)))
