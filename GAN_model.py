@@ -2,7 +2,6 @@ import imp
 from operator import mod
 from tokenize import Name
 import numpy as np
-from numpy.lib import stride_tricks
 from tensorflow.keras.layers import Input, Dense, Reshape, Dropout, Flatten
 from tensorflow.keras.layers import BatchNormalization, Activation, UpSampling1D
 from tensorflow.keras.layers import Conv1DTranspose, Conv1D, Bidirectional, LSTM
@@ -49,6 +48,7 @@ class DCGAN:
 
     def build_generator(self):
         
+        model = Sequential()
         model = Sequential(name='Generator')
         model.add(Reshape((self.latent_size, 1)))
         model.add(Bidirectional(LSTM(16, return_sequences=True)))
@@ -103,10 +103,13 @@ class DCGAN:
             validity = Dense(1, activation='sigmoid')(concat)
 
             return Model(inputs=signal, outputs=validity, name = "Discriminator")
+            # return Model(inputs=signal, outputs=validity)
+
 
 
         else:
             model = Sequential(name='Discriminator')
+            # model = Sequential()
             model.add(Conv1D(8, kernel_size=8, strides=1, input_shape=self.input_shape, padding='same'))
             model.add(LeakyReLU(alpha=0.2))
             model.add(Dropout(0.25))
@@ -171,14 +174,18 @@ class DCGAN:
             # if reach save interval, plot the signals and save as image
             if epoch % save_interval == 0:
                 self.save_image(epoch)
-            if epoch % save_model_interval == 0:
-                self.save_generator(epoch)
-                self.save_disciminator(epoch)
-        
-        #save last round result
+            if save:
+                if os.path.isdir('save_model/') != True:
+                    os.mkdir('save_model/')
+                if (epoch % save_model_interval == 0 and epoch > 0):
+                    self.generator.save('save_model/gen_%d.h5'%epoch)
+                    self.disciminator.save('save_model/disc_%d.h5'%epoch)
+            
+        # save last round result
         self.save_image(epoch)
-        self.save_generator(epoch)
-        self.save_disciminator(epoch)
+        self.generator.save('save_model/gen_%d.h5'%epoch)
+        self.disciminator.save('save_model/disc_%d.h5'%epoch)
+
     def save_image(self, epoch):
 
         if os.path.isdir('image/') != True:
@@ -249,12 +256,7 @@ class DCGAN:
         return np.array(select_signals)
 
 
-    def save_generator(self, epoch):
-        self.generator.save('generator_%d.h5'%epoch)
-
-    def save_disciminator(self, epoch):
-        self.discrimintor.save('discriminator_%d.h5'%epoch)
-
+  
 # if __name__ == "__main__":
 #     EPOCHS = 3000
 #     LATENT_SIZE = 50
