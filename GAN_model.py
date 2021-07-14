@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import os
 import pickle
 from Minibatchdiscrimination import MinibatchDiscrimination
+import h5py
 
 class DCGAN:
 
@@ -20,7 +21,7 @@ class DCGAN:
         
         self.input_shape = input_shape
         self.latent_size = latent_size
-        optimizer = Adam(lr=0.0002)
+        optimizer = Adam(lr=0.0002, beta_1=0.5)
         self.random_sine = random_sine
         self.scale = scale
         self.minibatch = minibatch
@@ -134,7 +135,7 @@ class DCGAN:
 
             return Model(inputs=signal, outputs=validity)
     
-    def train(self, epochs, X_train, batch_size=128, save_interval=50):
+    def train(self, epochs, X_train, batch_size=128, save_interval=50, save=False, save_model_interval=1000):
         vaild = np.ones((batch_size, 1))
         fake = np.zeros((batch_size, 1))        
         
@@ -164,15 +165,20 @@ class DCGAN:
             # Train the generator (Goal: fool discriminator)
             g_loss = self.combine.train_on_batch(noise, vaild)
 
-            #print the progresss
+            # print the progresss
             print("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss))
 
             # if reach save interval, plot the signals and save as image
             if epoch % save_interval == 0:
                 self.save_image(epoch)
+            if epoch % save_model_interval == 0:
+                self.save_generator(epoch)
+                self.save_disciminator(epoch)
         
+        #save last round result
         self.save_image(epoch)
-
+        self.save_generator(epoch)
+        self.save_disciminator(epoch)
     def save_image(self, epoch):
 
         if os.path.isdir('image/') != True:
@@ -212,7 +218,10 @@ class DCGAN:
         return X_train, y
 
     def generate_noise(self, batch_size, sinwave=False):
-
+        '''
+        generate noise
+        if sinwave is True, generate sin wave noise, otherwise, return standard normal distribution.
+        '''
         if sinwave:
             x = np.linspace(-np.pi, np.pi, self.latent_size)
             noise = 0.1 * np.random.random_sample((batch_size, self.latent_size)) + 0.9 * np.sin(x)
@@ -238,6 +247,13 @@ class DCGAN:
                 select_signals.append(sg)
         
         return np.array(select_signals)
+
+
+    def save_generator(self, epoch):
+        self.generator.save('generator_%d.h5'%epoch)
+
+    def save_disciminator(self, epoch):
+        self.discrimintor.save('discriminator_%d.h5'%epoch)
 
 # if __name__ == "__main__":
 #     EPOCHS = 3000
