@@ -1,12 +1,14 @@
 from utils.data_util import *
 import pickle
 
+
 if __name__ == '__main__':
 
-
-    AA_DATASET_DIR = 'AA_dataset/'
+    # modify dataset path if necessary
+    AA_DATASET_DIR = 'AA_dataset/'   # MIT-BIH Arrhythmia Database
+    
+    AF_DATASET_DIR = 'AF_dataset/'   # AF Classification from a Short Single Lead ECG Recording - The PhysioNet Computing in Cardiology Challenge 2017
     LABEL_PATH = 'AF_dataset/REFERENCE-original.csv'
-    AF_DATASET_DIR = 'AF_dataset/'
 
 
     dataloader = DataLoader()
