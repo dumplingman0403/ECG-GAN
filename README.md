@@ -30,5 +30,5 @@ python3 process_ecg.py
 - [x] process ECG dataset - MIT-BIH Arrhythmia Database
 - [x] design GAN framework
 - [x] hyperparameter model
-    - [x] mode collapse 
+- [x] mode collapse 
 - [ ] validation
