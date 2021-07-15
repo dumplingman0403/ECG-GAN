@@ -9,7 +9,13 @@
     "LATENT_SIZE" : 50,
     "SAVE_INTRIVAL" : 100,
     "BATCH_SIZE" : 128,
-    "INPUT_SHAPE" : [180, 1],
-    "RANDOM_SINE" : false
+    "INPUT_SHAPE_AF" : [180, 1],
+    "INPUT_SHAPE_AA" : [216, 1],
+    "RANDOM_SINE" : false,
+    "SCALE" : 2,
+    "MINIBATCH" : true, 
+    "SAVE_MODEL" : true,
+    "SAVE_REPORT" : true,
+    "GEN_VERSION" : 1
 
 }

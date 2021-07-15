@@ -10,8 +10,9 @@ from tensorflow.keras.optimizers import Adam
 
 
 class Generator:
-    def __init__(self, latent_size):
+    def __init__(self, latent_size, input_shape):
         self.latent_size = latent_size
+        self.input_shape = input_shape
 
     def G_vl(self): 
         '''

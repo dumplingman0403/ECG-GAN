@@ -12,20 +12,24 @@ import matplotlib.pyplot as plt
 import os
 import pickle
 from Minibatchdiscrimination import MinibatchDiscrimination
-import h5py
+import h5py, json
+import in_progress.generator as Gen
 
 class DCGAN:
 
-    def __init__(self, input_shape=(180, 1), latent_size=100, random_sine = True, scale=1, minibatch=False):
+    def __init__(self, input_shape=(180, 1), latent_size=100, random_sine = True, scale=1, minibatch=False, gen_version=0):
         
+        self.gen_v = gen_version
         self.input_shape = input_shape
         self.latent_size = latent_size
         optimizer = Adam(lr=0.0002, beta_1=0.5)
+        self.optimizer = optimizer
         self.random_sine = random_sine
         self.scale = scale
         self.minibatch = minibatch
         # build and compile discriminator
         self.discrimintor = self.bulid_discrimintor()
+        
         self.discrimintor.compile(loss='binary_crossentropy', optimizer=optimizer, metrics=['accuracy'])
         
         # build generator
@@ -47,26 +51,30 @@ class DCGAN:
         self.combine.compile(loss='binary_crossentropy', optimizer=optimizer)
 
     def build_generator(self):
-        
-        model = Sequential()
-        model = Sequential(name='Generator')
-        model.add(Reshape((self.latent_size, 1)))
-        model.add(Bidirectional(LSTM(16, return_sequences=True)))
-        model.add(Flatten())
-        model.add(Dense(100))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(150))
-        model.add(LeakyReLU(alpha=0.2))
-        model.add(Dense(self.input_shape[0]))
-        model.add(Activation('tanh'))
-        model.add(Reshape(self.input_shape))
-        noise = Input(shape=(self.latent_size,))
-        signal = model(noise)
 
-        model.summary()
+        if (self.gen_v == 0 or self.gen_v == None):
+            model = Sequential()
+            model = Sequential(name='Generator')
+            model.add(Reshape((self.latent_size, 1)))
+            model.add(Bidirectional(LSTM(1, return_sequences=True)))
+            model.add(Flatten())
+            model.add(Dense(100))
+            model.add(LeakyReLU(alpha=0.2))
+            model.add(Dense(150))
+            model.add(LeakyReLU(alpha=0.2))
+            model.add(Dense(self.input_shape[0]))
+            model.add(Activation('tanh'))
+            model.add(Reshape(self.input_shape))
+            noise = Input(shape=(self.latent_size,))
+            signal = model(noise)
 
-        return Model(inputs=noise, outputs=signal) 
+            model.summary()
 
+            return Model(inputs=noise, outputs=signal) 
+
+        elif self.gen_v == 1:
+            model = Gen.Generator(self.latent_size, self.input_shape)
+            return model.G_vl()
 
         
 
@@ -138,10 +146,12 @@ class DCGAN:
 
             return Model(inputs=signal, outputs=validity)
     
-    def train(self, epochs, X_train, batch_size=128, save_interval=50, save=False, save_model_interval=1000):
+    def train(self, epochs, X_train, batch_size=128, save_interval=50, save=False, save_model_interval=100, save_report=True):
         vaild = np.ones((batch_size, 1))
         fake = np.zeros((batch_size, 1))        
-        
+        progress = {'d_loss':[],
+                    'g_loss':[],
+                    'acc':[]}
         for epoch in range(epochs):
 
             # -------------------
@@ -170,6 +180,11 @@ class DCGAN:
 
             # print the progresss
             print("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss))
+            
+            # save progress
+            progress['d_loss'].append(d_loss[0])
+            progress['acc'].append(d_loss[1])
+            progress['g_loss'].append(g_loss)
 
             # if reach save interval, plot the signals and save as image
             if epoch % save_interval == 0:
@@ -179,12 +194,18 @@ class DCGAN:
                     os.mkdir('save_model/')
                 if (epoch % save_model_interval == 0 and epoch > 0):
                     self.generator.save('save_model/gen_%d.h5'%epoch)
-                    self.disciminator.save('save_model/disc_%d.h5'%epoch)
-            
+                    self.save_sample(self.generator, self.discrimintor, self.input_shape[0], epoch)
+
         # save last round result
         self.save_image(epoch)
         self.generator.save('save_model/gen_%d.h5'%epoch)
-        self.disciminator.save('save_model/disc_%d.h5'%epoch)
+        self.save_sample(self.generator, self.discriminator, self.input_shape[0], epoch)
+        
+        # save progress report
+        # progress['variable'] = {"optimizer":self.optimizer.name}
+        if save_report:
+            with open('output/progress_report.json', 'w') as f:
+                json.dump(progress, f)
 
     def save_image(self, epoch):
 
@@ -255,7 +276,31 @@ class DCGAN:
         
         return np.array(select_signals)
 
+    def save_sample(self, generator, discriminator, sample_size, epoch):
+        '''
+        generate signal samples and save as .csv 
+        '''
+        if os.path.isdir('output/') != True:
+            os.mkdir('output/')
+        
+        # generate signals
+        noise = self.generate_noise(sample_size)
+        signals = generator.predict(noise)
 
+        # classify the signals is real or fake 
+        critic = discriminator.predict(signals)
+
+        #recover signal by mutiplying scale 
+        signals = signals.reshape(-1, self.input_shape[0]) * self.scale
+
+        valid_sample = []
+        for i, decision in enumerate(critic):
+            if decision > 0.5:
+                valid_sample.append(signals[i])
+
+        
+        np.savetxt('output/sample_%d.csv'%epoch, valid_sample, delimiter=',')
+        
   
 # if __name__ == "__main__":
 #     EPOCHS = 3000
