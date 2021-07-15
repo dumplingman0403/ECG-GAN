@@ -22,7 +22,7 @@ if __name__ == "__main__":
     MINIBATCH = True # use minibatch discrimination to avoid mode collapse
     SAVE_MODEL = True
     SAVE_REPORT = True
-    GEN_VERSION = 1
+    GEN_VERSION = 1  # use generator from in_progress
     dcgan = DCGAN(INPUT_SHAPE, LATENT_SIZE, random_sine=RANDOM_SINE, scale=SCALE, minibatch=MINIBATCH, gen_version=GEN_VERSION) 
     X_train = dcgan.specify_range(X_train, -2, 2)/2 # limit the signal range [-2, 2], scale by divid 2 
     X_train = X_train.reshape(-1, INPUT_SHAPE[0], INPUT_SHAPE[1])

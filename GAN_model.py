@@ -72,7 +72,7 @@ class DCGAN:
 
             return Model(inputs=noise, outputs=signal) 
 
-        elif self.gen_v == 1:
+        elif self.gen_v == 1:  # use different generater from in_progress
             model = Gen.Generator(self.latent_size, self.input_shape)
             return model.G_vl()
 
