@@ -46,16 +46,6 @@ LABEL_PATH = 'AF_dataset/REFERENCE-original.csv'
 
 ## Output 
 
-<img src="generate_ECG/e4000_7.png" alt="e4000_7.png" width="200"/>
-<img src="generate_ECG/e4000_16.png" alt="e4000_16.png" width="200"/>
-<img src="generate_ECG/e4000_11.png" alt="e4000_11.png" width="200"/>
-<img src="generate_ECG/e4000_19.png" alt="e4000_19.png" width="200"/>
-<img src="generate_ECG/e4000_40.png" alt="e4000_40.png" width="200"/>
-<img src="generate_ECG/e5000_12.png" alt="e5000_12.png" width="200"/>
-<img src="generate_ECG/e5000_26.png" alt="e5000_26.png" width="200"/>
-<img src="generate_ECG/e7000_44.png" alt="e7000_44.png" width="200"/>
-<img src="generate_ECG/e8000_33.png" alt="e8000_33.png" width="200"/>
-<img src="generate_ECG/e10000_51.png" alt="e10000_51.png" width="200"/>
-<img src="generate_ECG/e10000_89.png" alt="e10000_89.png" width="200"/>
+<img src="generate_ECG/e4000_7.png" alt="e4000_7.png" width="200"/><img src="generate_ECG/e4000_16.png" alt="e4000_16.png" width="200"/><img src="generate_ECG/e4000_11.png" alt="e4000_11.png" width="200"/><img src="generate_ECG/e4000_19.png" alt="e4000_19.png" width="200"/><img src="generate_ECG/e4000_40.png" alt="e4000_40.png" width="200"/><img src="generate_ECG/e5000_12.png" alt="e5000_12.png" width="200"/><img src="generate_ECG/e5000_26.png" alt="e5000_26.png" width="200"/><img src="generate_ECG/e7000_44.png" alt="e7000_44.png" width="200"/><img src="generate_ECG/e8000_33.png" alt="e8000_33.png" width="200"/><img src="generate_ECG/e10000_51.png" alt="e10000_51.png" width="200"/><img src="generate_ECG/e10000_89.png" alt="e10000_89.png" width="200"/>
 
 
