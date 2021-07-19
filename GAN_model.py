@@ -53,15 +53,24 @@ class DCGAN:
     def build_generator(self):
 
         if (self.gen_v == 0 or self.gen_v == None):
-            model = Sequential()
             model = Sequential(name='Generator')
             model.add(Reshape((self.latent_size, 1)))
-            model.add(Bidirectional(LSTM(1, return_sequences=True)))
+            model.add(Bidirectional(LSTM(16, return_sequences=True)))
+            
+            model.add(Conv1D(32, kernel_size=8, padding="same"))
+            model.add(LeakyReLU(alpha=0.2))
+
+            model.add(UpSampling1D())
+            model.add(Conv1D(16, kernel_size=8, padding="same"))
+            model.add(LeakyReLU(alpha=0.2))
+
+            model.add(UpSampling1D())
+            model.add(Conv1D(8, kernel_size=8, padding="same"))
+            model.add(LeakyReLU(alpha=0.2))
+
+            model.add(Conv1D(1, kernel_size=8, padding="same"))
             model.add(Flatten())
-            model.add(Dense(100))
-            model.add(LeakyReLU(alpha=0.2))
-            model.add(Dense(150))
-            model.add(LeakyReLU(alpha=0.2))
+
             model.add(Dense(self.input_shape[0]))
             model.add(Activation('tanh'))
             model.add(Reshape(self.input_shape))
@@ -72,9 +81,24 @@ class DCGAN:
 
             return Model(inputs=noise, outputs=signal) 
 
-        elif self.gen_v == 1:  # use different generater from in_progress
+        elif self.gen_v in [1, 2, 3, 4, 5]:  # use different generater from in_progress
             model = Gen.Generator(self.latent_size, self.input_shape)
-            return model.G_vl()
+
+            if self.gen_v == 1:
+                return model.G_vl()
+            if self.gen_v == 2:
+                return model.G_v2()
+            if self.gen_v == 3:
+                return model.G_v3()
+            if self.gen_v == 4:
+                return model.G_v4()
+            if self.gen_v == 5:
+                return model.G_v5()
+        
+        else:
+            raise ValueError("Invalid generate version.")
+            
+            
 
         
 
@@ -194,12 +218,12 @@ class DCGAN:
                     os.mkdir('save_model/')
                 if (epoch % save_model_interval == 0 and epoch > 0):
                     self.generator.save('save_model/gen_%d.h5'%epoch)
-                    self.save_sample(self.generator, self.discrimintor, self.input_shape[0], epoch)
+                    self.save_sample(self.generator, self.discrimintor, batch_size, epoch)
 
         # save last round result
         self.save_image(epoch)
         self.generator.save('save_model/gen_%d.h5'%epoch)
-        self.save_sample(self.generator, self.discrimintor, self.input_shape[0], epoch)
+        self.save_sample(self.generator, self.discrimintor, batch_size, epoch)
         
         # save progress report
         # progress['variable'] = {"optimizer":self.optimizer.name}
@@ -300,7 +324,7 @@ class DCGAN:
 
         
         np.savetxt('output/sample_%d.csv'%epoch, valid_sample, delimiter=',')
-        
+        np.savetxt('output/prob_%d.csv'%epoch, critic, delimiter=',')
   
 # if __name__ == "__main__":
 #     EPOCHS = 3000

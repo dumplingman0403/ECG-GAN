@@ -40,12 +40,20 @@ LABEL_PATH = 'AF_dataset/REFERENCE-original.csv'
 - [x] process ECG dataset - MIT-BIH Arrhythmia Database
 - [x] design GAN framework
 - [x] hyperparameter model
-- [x] mode collapse 
-    - [x] apply minibatch discrimination
+- [x] mode collapse - apply minibatch discrimination
 - [ ] validation
 
 ## Output 
+### MIT-BIH Arrhythmia Database
+<img src="generate_ECG/aa_e4000_7.png" alt="aa_e4000_7.png" width="150"/><img src="generate_ECG/aa_e4000_16.png" alt="aa_e4000_16.png" width="150"/><img src="generate_ECG/aa_e4000_11.png" alt="aa_e4000_11.png" width="150"/><img src="generate_ECG/aa_e4000_19.png" alt="aa_e4000_19.png" width="150"/><img src="generate_ECG/aa_e4000_40.png" alt="aa_e4000_40.png" width="150"/><img src="generate_ECG/aa_e5000_12.png" alt="aa_e5000_12.png" width="150"/><img src="generate_ECG/aa_e5000_26.png" alt="aa_e5000_26.png" width="150"/><img src="generate_ECG/aa_e7000_44.png" alt="aa_e7000_44.png" width="150"/><img src="generate_ECG/aa_e8000_33.png" alt="aa_e8000_33.png" width="150"/><img src="generate_ECG/aa_e10000_51.png" alt="aa_e10000_51.png" width="150"/><img src="generate_ECG/aa_e10000_89.png" alt="aa_e10000_89.png" width="150"/>
 
-<img src="generate_ECG/e4000_7.png" alt="e4000_7.png" width="200"/><img src="generate_ECG/e4000_16.png" alt="e4000_16.png" width="200"/><img src="generate_ECG/e4000_11.png" alt="e4000_11.png" width="200"/><img src="generate_ECG/e4000_19.png" alt="e4000_19.png" width="200"/><img src="generate_ECG/e4000_40.png" alt="e4000_40.png" width="200"/><img src="generate_ECG/e5000_12.png" alt="e5000_12.png" width="200"/><img src="generate_ECG/e5000_26.png" alt="e5000_26.png" width="200"/><img src="generate_ECG/e7000_44.png" alt="e7000_44.png" width="200"/><img src="generate_ECG/e8000_33.png" alt="e8000_33.png" width="200"/><img src="generate_ECG/e10000_51.png" alt="e10000_51.png" width="200"/><img src="generate_ECG/e10000_89.png" alt="e10000_89.png" width="200"/>
-
-
+### Short Single Lead ECG Recording
+#### Atrial Fibrillation 
+epoch 1000 <br>
+<img src="generate_ECG/afaf_e1000_3.png" alt="afaf_e1000_3.png" width="150"/>
+<img src="generate_ECG/afaf_e1000_4.png" alt="afaf_e1000_4.png" width="150"/>
+<img src="generate_ECG/afaf_e1000_6.png" alt="afaf_e1000_6.png" width="150"/> <br>
+epoch 2000 <br>
+<img src="generate_ECG/afaf_e2000_6.png" alt="afaf_e2000_6.png" width="150"/>
+<img src="generate_ECG/afaf_e2000_8.png" alt="afaf_e2000_8.png" width="150"/>
+<img src="generate_ECG/afaf_e2000_14.png" alt="afaf_e2000_14.png" width="150"/> <br>

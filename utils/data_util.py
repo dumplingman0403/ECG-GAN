@@ -212,4 +212,19 @@ class DataLoader():
 
         return (X_train, y)
 
+    def pick_type_only(self, X, y, target):
+        """
+        X: numpy array, training data
+        y: numpy array, label
+        target: int, target type of signal
+        """
+        pick_signals = []
+        for i, type in enumerate(y):
+
+            if type == target:
+                pick_signals.append(X[i])
+
+        return np.array(pick_signals)
+
+
 
