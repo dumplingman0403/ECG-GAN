@@ -96,7 +96,7 @@ class DCGAN:
                 return model.G_v5()
         
         else:
-            raise ValueError("Invalid generate version.")
+            raise ValueError("Invalid generator version.")
             
             
 
