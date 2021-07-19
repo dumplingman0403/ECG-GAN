@@ -48,7 +48,11 @@ LABEL_PATH = 'AF_dataset/REFERENCE-original.csv'
 <img src="generate_ECG/aa_e4000_7.png" alt="aa_e4000_7.png" width="150"/><img src="generate_ECG/aa_e4000_16.png" alt="aa_e4000_16.png" width="150"/><img src="generate_ECG/aa_e4000_11.png" alt="aa_e4000_11.png" width="150"/><img src="generate_ECG/aa_e4000_19.png" alt="aa_e4000_19.png" width="150"/><img src="generate_ECG/aa_e4000_40.png" alt="aa_e4000_40.png" width="150"/><img src="generate_ECG/aa_e5000_12.png" alt="aa_e5000_12.png" width="150"/><img src="generate_ECG/aa_e5000_26.png" alt="aa_e5000_26.png" width="150"/><img src="generate_ECG/aa_e7000_44.png" alt="aa_e7000_44.png" width="150"/><img src="generate_ECG/aa_e8000_33.png" alt="aa_e8000_33.png" width="150"/><img src="generate_ECG/aa_e10000_51.png" alt="aa_e10000_51.png" width="150"/><img src="generate_ECG/aa_e10000_89.png" alt="aa_e10000_89.png" width="150"/>
 
 ### Short Single Lead ECG Recording
-#### Atrial Fibrillation 
+#### Atrial Fibrillation
+real <br>
+<img src="generate_ECG/af_real_3.png" alt="af_real_3.png" width="150"/>
+<img src="generate_ECG/af_real_4.png" alt="af_real_4.png" width="150"/>
+<img src="generate_ECG/af_real_6.png" alt="af_real_6.png" width="150"/> <br>
 epoch 1000 <br>
 <img src="generate_ECG/afaf_e1000_3.png" alt="afaf_e1000_3.png" width="150"/>
 <img src="generate_ECG/afaf_e1000_4.png" alt="afaf_e1000_4.png" width="150"/>
