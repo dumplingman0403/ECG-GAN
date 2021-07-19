@@ -8,15 +8,15 @@ from GAN_model import *
 if __name__ == "__main__":
     
     
-    X_train = pickle.load(open("X_train_aa.pkl", "rb"))
-
-    EPOCHS = 10000
+    # X_train = pickle.load(open("X_train_aa.pkl", "rb"))  # --> load AA dataset
+    X_train = pickle.load(open("X_train_af.pkl", "rb"))  # --> load AF dataset
+    EPOCHS = 2000
     LATENT_SIZE = 100
     SAVE_INTRIVAL = 100
     SAVE_MODEL_INTERVAL = 1000
     BATCH_SIZE = 128
-    INPUT_SHAPE = (216, 1)  # --> AA dataset
-    #INPUT_SHAPE = (180, 1)  # --> AF dataset
+    # INPUT_SHAPE = (216, 1)  # --> AA dataset
+    INPUT_SHAPE = (180, 1)  # --> AF dataset
     RANDOM_SINE = False
     SCALE = 2 
     MINIBATCH = True # use minibatch discrimination to avoid mode collapse

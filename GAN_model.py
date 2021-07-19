@@ -199,7 +199,7 @@ class DCGAN:
         # save last round result
         self.save_image(epoch)
         self.generator.save('save_model/gen_%d.h5'%epoch)
-        self.save_sample(self.generator, self.discriminator, self.input_shape[0], epoch)
+        self.save_sample(self.generator, self.discrimintor, self.input_shape[0], epoch)
         
         # save progress report
         # progress['variable'] = {"optimizer":self.optimizer.name}
