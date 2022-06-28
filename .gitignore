@@ -3,6 +3,7 @@
 __pycache__/
 Semi-Supervised-GAN.py
 AF_dataset/
+AA_dataset/
 .vscode
 *.ipynb_checkpoints
 *.ipynb

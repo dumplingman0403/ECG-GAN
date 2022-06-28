@@ -1,6 +1,3 @@
-import imp
-from operator import mod
-from tokenize import Name
 import numpy as np
 from tensorflow.keras.layers import Input, Dense, Reshape, Dropout, Flatten
 from tensorflow.keras.layers import BatchNormalization, Activation, UpSampling1D
@@ -13,7 +10,7 @@ import os
 import pickle
 from Minibatchdiscrimination import MinibatchDiscrimination
 import h5py, json
-import in_progress.generator as Gen
+import module.generator as Gen
 
 class DCGAN:
 

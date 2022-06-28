@@ -1,6 +1,6 @@
 numpy
 scipy
-pickle
+pickle-mixin
 tensorflow
 matplotlib
 tqdm
