@@ -6,8 +6,9 @@
 pip install -r requirement.txt
 ```
 ## Usage
-
+### [See data description](utils/README.md)
 ### download dataset
+
 - option 1
 ```
 sh download.sh
@@ -35,13 +36,6 @@ AF_DATASET_DIR = 'AF_dataset/'   # AF Classification from a Short Single Lead EC
 LABEL_PATH = 'AF_dataset/REFERENCE-original.csv'
 
 ``` 
-## To do list
-- [x] process ECG dataset - AF Classification Challenge 2017
-- [x] process ECG dataset - MIT-BIH Arrhythmia Database
-- [x] design GAN framework
-- [x] hyperparameter model
-- [x] mode collapse - apply minibatch discrimination
-- [ ] validation
 
 ## Output 
 ### MIT-BIH Arrhythmia Database
