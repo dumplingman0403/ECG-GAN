@@ -21,3 +21,10 @@ ECG recordings, collected using the AliveCor device, were generously donated for
 
 ECG recordings were sampled as 300 Hz and they have been band pass filtered by the AliveCor device. All data are provided in MATLAB V4 WFDB-compliant format (each including a .mat file containing the ECG and a .hea file containing the waveform information). More details of the training set can be seen in Table 2. Figure 1 shows the examples of the ECG waveforms (lasting for 20 s) for the four classes in this Challenge. From top to bottom, they are ECG waveforms of normal rhythm, AF rhythm, other rhythm and noisy recordings. [link](https://physionet.org/content/challenge-2017/1.0.0/)
 
+|Type         |recording|Mean|SD  |Max |Median|Min |
+|-------------|---------|----|----|----|------|----|
+|Normal       |5154     |31.9|10.0|61.0|30    |9.0 |
+|AF           |771      |31.6|12.5|60  |30    |10.0|
+|Other rhythm |2557     |34.1|11.8|60.9|30    |9.1 |
+|Noisy        |46       |27.1| 9.0|60  |30    |10.2|
+|Total        |8528     |32.5|10.9|61.0|30    |9.0 |

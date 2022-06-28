@@ -7,7 +7,7 @@ from GAN_model import *
 
 if __name__ == "__main__":
     
-    
+    print("Loading data...")
     # X_train = pickle.load(open("X_train_aa.pkl", "rb"))  # --> load AA dataset
     X_train = pickle.load(open("X_train_af.pkl", "rb"))  # --> load AF dataset
     y = pickle.load(open('y_af.pkl', 'rb'))
@@ -30,6 +30,7 @@ if __name__ == "__main__":
     dcgan = DCGAN(INPUT_SHAPE, LATENT_SIZE, random_sine=RANDOM_SINE, scale=SCALE, minibatch=MINIBATCH, gen_version=GEN_VERSION) 
     X_train = dcgan.specify_range(X_train, -2, 2)/2 # limit the signal range [-2, 2], scale by divid 2 
     X_train = X_train.reshape(-1, INPUT_SHAPE[0], INPUT_SHAPE[1])
+    print('Training...')
     dcgan.train(EPOCHS, X_train, BATCH_SIZE, SAVE_INTRIVAL, save=SAVE_MODEL, save_model_interval=SAVE_MODEL_INTERVAL, 
                 save_report=SAVE_REPORT)
     print("Complete!!!")
