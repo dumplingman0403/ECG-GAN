@@ -36,6 +36,17 @@ AF_DATASET_DIR = 'AF_dataset/'   # AF Classification from a Short Single Lead EC
 LABEL_PATH = 'AF_dataset/REFERENCE-original.csv'
 
 ``` 
+### GAN Training
+training ECG signal with GAN model
+```
+python3 train.py
+```
+
+modify the input dataset path in `train.py` if you change the path of `X_train_af.pkl` and `y_af.pkl`
+```
+X_train = pickle.load(open("path_of_X_train_af.pkl", "rb"))  # --> load AF dataset
+y = pickle.load(open("path_of_y_af.pkl", 'rb'))
+```
 
 ## Output 
 ### MIT-BIH Arrhythmia Database

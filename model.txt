@@ -1,0 +1,107 @@
+Model: "Generator"
+_________________________________________________________________
+ Layer (type)                Output Shape              Param #   
+=================================================================
+ reshape (Reshape)           (None, 100, 1)            0         
+                                                                 
+ bidirectional (Bidirectiona  (None, 100, 32)          2304      
+ l)                                                              
+                                                                 
+ conv1d_4 (Conv1D)           (None, 100, 32)           8224      
+                                                                 
+ leaky_re_lu_4 (LeakyReLU)   (None, 100, 32)           0         
+                                                                 
+ up_sampling1d (UpSampling1D  (None, 200, 32)          0         
+ )                                                               
+                                                                 
+ conv1d_5 (Conv1D)           (None, 200, 16)           4112      
+                                                                 
+ leaky_re_lu_5 (LeakyReLU)   (None, 200, 16)           0         
+                                                                 
+ up_sampling1d_1 (UpSampling  (None, 400, 16)          0         
+ 1D)                                                             
+                                                                 
+ conv1d_6 (Conv1D)           (None, 400, 8)            1032      
+                                                                 
+ leaky_re_lu_6 (LeakyReLU)   (None, 400, 8)            0         
+                                                                 
+ conv1d_7 (Conv1D)           (None, 400, 1)            65        
+                                                                 
+ flatten_2 (Flatten)         (None, 400)               0         
+                                                                 
+ dense_1 (Dense)             (None, 180)               72180     
+                                                                 
+ activation (Activation)     (None, 180)               0         
+                                                                 
+ reshape_1 (Reshape)         (None, 180, 1)            0         
+                                                                 
+=================================================================
+Total params: 87,917
+Trainable params: 87,917
+Non-trainable params: 0
+_________________________________________________________________
+
+
+
+Model: "Discriminator"
+__________________________________________________________________________________________________
+ Layer (type)                   Output Shape         Param #     Connected to                     
+==================================================================================================
+ input_11 (InputLayer)          [(None, 180, 1)]     0           []                               
+                                                                                                  
+ conv1d_32 (Conv1D)             (None, 180, 8)       72          ['input_11[0][0]']               
+                                                                                                  
+ leaky_re_lu_30 (LeakyReLU)     (None, 180, 8)       0           ['conv1d_32[0][0]']              
+                                                                                                  
+ dropout_24 (Dropout)           (None, 180, 8)       0           ['leaky_re_lu_30[0][0]']         
+                                                                                                  
+ max_pooling1d_24 (MaxPooling1D  (None, 60, 8)       0           ['dropout_24[0][0]']             
+ )                                                                                                
+                                                                                                  
+ conv1d_33 (Conv1D)             (None, 60, 16)       1040        ['max_pooling1d_24[0][0]']       
+                                                                                                  
+ leaky_re_lu_31 (LeakyReLU)     (None, 60, 16)       0           ['conv1d_33[0][0]']              
+                                                                                                  
+ dropout_25 (Dropout)           (None, 60, 16)       0           ['leaky_re_lu_31[0][0]']         
+                                                                                                  
+ max_pooling1d_25 (MaxPooling1D  (None, 29, 16)      0           ['dropout_25[0][0]']             
+ )                                                                                                
+                                                                                                  
+ conv1d_34 (Conv1D)             (None, 15, 32)       4128        ['max_pooling1d_25[0][0]']       
+                                                                                                  
+ leaky_re_lu_32 (LeakyReLU)     (None, 15, 32)       0           ['conv1d_34[0][0]']              
+                                                                                                  
+ dropout_26 (Dropout)           (None, 15, 32)       0           ['leaky_re_lu_32[0][0]']         
+                                                                                                  
+ max_pooling1d_26 (MaxPooling1D  (None, 7, 32)       0           ['dropout_26[0][0]']             
+ )                                                                                                
+                                                                                                  
+ conv1d_35 (Conv1D)             (None, 4, 64)        16448       ['max_pooling1d_26[0][0]']       
+                                                                                                  
+ leaky_re_lu_33 (LeakyReLU)     (None, 4, 64)        0           ['conv1d_35[0][0]']              
+                                                                                                  
+ dropout_27 (Dropout)           (None, 4, 64)        0           ['leaky_re_lu_33[0][0]']         
+                                                                                                  
+ max_pooling1d_27 (MaxPooling1D  (None, 1, 64)       0           ['dropout_27[0][0]']             
+ )                                                                                                
+/usr/local/lib/python3.7/dist-packages/keras/optimizer_v2/adam.py:105: UserWarning: The `lr` argument is deprecated, use `learning_rate` instead.
+  super(Adam, self).__init__(name, **kwargs)
+                                                                                                  
+ flatten_14 (Flatten)           (None, 180)          0           ['input_11[0][0]']               
+                                                                                                  
+ flatten_15 (Flatten)           (None, 64)           0           ['max_pooling1d_27[0][0]']       
+                                                                                                  
+ minibatch_discrimination_6 (Mi  (None, 190)         5400        ['flatten_14[0][0]']             
+ nibatchDiscrimination)                                                                           
+                                                                                                  
+ concatenate_6 (Concatenate)    (None, 254)          0           ['flatten_15[0][0]',             
+                                                                  'minibatch_discrimination_6[0][0
+                                                                 ]']                              
+                                                                                                  
+ dense_8 (Dense)                (None, 1)            255         ['concatenate_6[0][0]']          
+                                                                                                  
+==================================================================================================
+Total params: 27,343
+Trainable params: 27,343
+Non-trainable params: 0
+__________________________________________________________________________________________________
